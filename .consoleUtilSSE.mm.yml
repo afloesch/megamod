@@ -2,8 +2,8 @@
 description: optional short description text goes here.
 # mod dependency list optional
 dependency:
-  afloesch/megamod/.addresslibrary.mm.yml: ">=v0.1.0"
-  afloesch/megamod/.skse.mm.yml: ">=v2.0.20"
+  afloesch/megamod/main/.addresslibrary.mm.yml: ">=v0.1.0"
+  afloesch/megamod/main/.skse.mm.yml: ">=v2.0.20"
 # optional extract directory for mod archive relative to 
 # the specified game install folder. (Unix paths)
 directory: /
