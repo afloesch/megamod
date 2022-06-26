@@ -1,6 +1,5 @@
 # description is optional
-description: |
-SKSE 64bit for Skyrim Special Edition
+description: SKSE 64bit for Skyrim Special Edition
 # optional extract directory for mod archive relative to 
 # the specified game install folder. (Unix paths)
 directory: /
@@ -15,8 +14,7 @@ name: SKSE SSE
 # mod ESRB rating. if none specified then mod is safe for all ages.
 rating:
   esrb: E # one of E, eC, E10+, T, M, AO
-schema: v1.0
 # url optional for mod releases. defaults to releases archive
-url: https://github.com/ianpatt/skse64/releases/download/v2.0.20/skse64_2_00_20.7z
+url: "https://github.com/ianpatt/skse64/releases/download/v2.0.20/skse64_2_00_20.7z"
 # version/tag required
 version: v2.0.20
