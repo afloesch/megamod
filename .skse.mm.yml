@@ -1,0 +1,25 @@
+# description is optional
+description: |
+optional short description text goes here.
+# mod dependency list optional
+#dependency:
+#  ousnius/BodySlide-and-Outfit-Studio/test: ">=v5.6.0"
+# optional extract directory for mod archive relative to 
+# a specified install folder. (Unix paths)
+directory: /
+# optional game metadata
+game:
+  # optional, but best practice to include the game executable name
+  executable: SkyrimSE.exe
+  # gameVersion optional, defaults to all versions. Used to enforce game version compatibility between mods
+  version: "<=v1.5.97"
+# name is optional will default to the repo name
+name: SKSE SSE
+# mod ESRB rating. if none specified then mod is safe for all ages.
+ratings:
+  esrb: E # one of E, eC, E10+, T, M, AO
+schema: v1.0
+# url optional for mod releases. defaults to releases archive
+url: https://github.com/ianpatt/skse64/releases/download/v2.0.20/skse64_2_00_20.7z
+# version/tag required
+version: v2.0.20
