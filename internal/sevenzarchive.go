@@ -26,7 +26,7 @@ func (a SevenZArchive) Unpack(dst string, src string) error {
 	}
 
 	for _, file := range f.File {
-		filePath := filepath.Join(dst, strings.Replace(file.Name, src, "", 1))
+		filePath := filepath.Clean(filepath.Join(dst, strings.Replace(file.Name, src, "", 1)))
 		/*if !strings.HasPrefix(filePath, filepath.Clean(dst)+string(os.PathSeparator)) {
 			return fmt.Errorf("invalid file path")
 		}*/

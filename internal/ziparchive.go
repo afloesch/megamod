@@ -2,7 +2,6 @@ package internal
 
 import (
 	"archive/zip"
-	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -27,10 +26,10 @@ func (a ZipArchive) Unpack(dst string, src string) error {
 	defer f.Close()
 
 	for _, f := range f.File {
-		filePath := filepath.Join(dst, f.Name)
-		if !strings.HasPrefix(filePath, filepath.Clean(dst)+string(os.PathSeparator)) {
+		filePath := filepath.Clean(filepath.Join(dst, strings.Replace(f.Name, src, "", 1)))
+		/*if !strings.HasPrefix(filePath, filepath.Clean(dst)+string(os.PathSeparator)) {
 			return fmt.Errorf("invalid file path")
-		}
+		}*/
 
 		if f.FileInfo().IsDir() {
 			os.MkdirAll(filePath, os.ModePerm)

@@ -15,17 +15,17 @@ func main() {
 		return
 	}
 
-	fmt.Println("manifest", test)
+	fmt.Println("mod file:", test.URL)
 
 	if len(test.Dependency) > 0 {
-		deps, err := test.FlattenDeps(ctx)
+		err = test.FlattenDeps(ctx)
 		if err != nil {
 			fmt.Println(fmt.Errorf("parse error: %s", err))
 			return
 		}
 
-		for _, d := range deps {
-			fmt.Println("dep", d)
+		for _, v := range test.AllDependencies() {
+			fmt.Println("dependency:", v.URL)
 		}
 
 		err = test.FetchDeps(ctx, "./tmp")
@@ -42,4 +42,6 @@ func main() {
 			return
 		}
 	}
+
+	fmt.Println("mod files downloaded to ./tmp")
 }

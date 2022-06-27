@@ -1,0 +1,20 @@
+# description is optional
+dependency:
+  afloesch/megamod/main/.skse.mm.yml: ">=v2.0.20"
+directory:
+  target: Data
+# optional game metadata
+game:
+  # optional, but best practice to include the game executable name
+  executable: SkyrimSE.exe
+  # gameVersion optional, defaults to all versions. Used to enforce game version compatibility between mods
+  version: "<=v1.5.97"
+# name is optional will default to the repo name
+name: SKSE SSE
+# mod ESRB rating. if none specified then mod is safe for all ages.
+rating:
+  esrb: E # one of E, eC, E10+, T, M, AO
+# url optional for mod releases. defaults to releases archive
+url: "https://github.com/afloesch/megamod/releases/download/v0.1.0/SkyUI_5_2_SE-12604-5-2SE.7z"
+# version/tag required
+version: v0.1.0

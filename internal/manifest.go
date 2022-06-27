@@ -49,6 +49,10 @@ type Manifest struct {
 	allDeps map[string]*Manifest
 }
 
+func (m *Manifest) AllDependencies() map[string]*Manifest {
+	return m.allDeps
+}
+
 func (m *Manifest) FetchRelease(ctx context.Context, path string) error {
 	if m.URL == "" {
 		return nil
@@ -108,32 +112,27 @@ func (m *Manifest) FetchDeps(ctx context.Context, path string) error {
 	return nil
 }
 
-func (m *Manifest) FlattenDeps(ctx context.Context) ([]*Manifest, error) {
-	var deps []*Manifest
-
+func (m *Manifest) FlattenDeps(ctx context.Context) error {
 	for k := range m.Dependency {
 		var d *Manifest
 		if m.allDeps[k] == nil {
 			d, err := FetchManifest(ctx, k)
 			if err != nil {
-				return nil, err
+				return err
 			}
 
 			m.allDeps[k] = d
-			deps = append(deps, d)
 		}
 
 		if d != nil && len(d.Dependency) > 0 {
-			sub, err := d.FlattenDeps(ctx)
+			err := d.FlattenDeps(ctx)
 			if err != nil {
-				return nil, err
+				return err
 			}
-
-			deps = append(deps, sub...)
 		}
 	}
 
-	return deps, nil
+	return nil
 }
 
 func FetchManifest(ctx context.Context, repo string) (*Manifest, error) {
