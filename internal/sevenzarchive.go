@@ -1,7 +1,6 @@
 package internal
 
 import (
-	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -10,7 +9,7 @@ import (
 	"github.com/bodgit/sevenzip"
 )
 
-const SevenZArchiveType ArchiveType = ".7z"
+const SevenZFileExtension FileExtension = ".7z"
 
 type SevenZArchive struct {
 	archiveData
@@ -20,17 +19,17 @@ func (a SevenZArchive) Location() string {
 	return a.location
 }
 
-func (a SevenZArchive) Unpack(dst string) error {
+func (a SevenZArchive) Unpack(dst string, src string) error {
 	f, err := sevenzip.OpenReader(a.location)
 	if err != nil {
 		return err
 	}
 
 	for _, file := range f.File {
-		filePath := filepath.Join(dst, file.Name)
-		if !strings.HasPrefix(filePath, filepath.Clean(dst)+string(os.PathSeparator)) {
+		filePath := filepath.Join(dst, strings.Replace(file.Name, src, "", 1))
+		/*if !strings.HasPrefix(filePath, filepath.Clean(dst)+string(os.PathSeparator)) {
 			return fmt.Errorf("invalid file path")
-		}
+		}*/
 
 		if file.FileInfo().IsDir() {
 			os.MkdirAll(filePath, os.ModePerm)

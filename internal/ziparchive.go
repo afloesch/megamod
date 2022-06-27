@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-const ZipArchiveType ArchiveType = ".zip"
+const ZipFileExtension FileExtension = ".zip"
 
 type ZipArchive struct {
 	archiveData
@@ -19,7 +19,7 @@ func (a ZipArchive) Location() string {
 	return a.location
 }
 
-func (a ZipArchive) Unpack(dst string) error {
+func (a ZipArchive) Unpack(dst string, src string) error {
 	f, err := zip.OpenReader(a.location)
 	if err != nil {
 		return err

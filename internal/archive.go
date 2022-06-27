@@ -5,21 +5,20 @@ import (
 	"strings"
 )
 
-const TarballArchiveType ArchiveType = ".tar.gz"
-const RarArchiveType ArchiveType = ".rar"
-const UnknownArchiveType ArchiveType = ""
+const TarballFileExtension FileExtension = ".tar.gz"
+const RarFileExtension FileExtension = ".rar"
+const UnknownFileExtension FileExtension = ""
 
-type ArchiveType string
+type FileExtension string
 
 type archiveData struct {
-	name      string
 	location  string
-	extension ArchiveType
+	extension FileExtension
 }
 
 type Archive interface {
 	Location() string
-	Unpack(dst string) error
+	Unpack(dst string, src string) error
 }
 
 type UnknownArchive struct {
@@ -30,32 +29,32 @@ func (a UnknownArchive) Location() string {
 	return a.location
 }
 
-func (a UnknownArchive) Unpack(dst string) error {
+func (a UnknownArchive) Unpack(dst, src string) error {
 	return nil
 }
 
 func NewArchive(path string) Archive {
 	d := archiveData{
 		location:  filepath.Clean(path),
-		extension: UnknownArchiveType,
+		extension: UnknownFileExtension,
 	}
 
-	if strings.HasSuffix(d.location, string(ZipArchiveType)) {
-		d.extension = ZipArchiveType
+	if strings.HasSuffix(d.location, string(ZipFileExtension)) {
+		d.extension = ZipFileExtension
 		return &ZipArchive{d}
 	}
 
-	if strings.HasSuffix(d.location, string(SevenZArchiveType)) {
-		d.extension = SevenZArchiveType
+	if strings.HasSuffix(d.location, string(SevenZFileExtension)) {
+		d.extension = SevenZFileExtension
 		return &SevenZArchive{d}
 	}
 
-	/*if strings.HasSuffix(d.location, string(TarballArchiveType)) {
-		d.extension = TarballArchiveType
+	/*if strings.HasSuffix(d.location, string(TarballFileExtension)) {
+		d.extension = TarballFileExtension
 	}
 
-	if strings.HasSuffix(d.location, string(RarArchiveType)) {
-		d.extension = RarArchiveType
+	if strings.HasSuffix(d.location, string(RarFileExtension)) {
+		d.extension = RarFileExtension
 	}*/
 
 	return &UnknownArchive{d}

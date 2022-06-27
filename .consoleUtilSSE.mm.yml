@@ -4,6 +4,8 @@ description: optional short description text goes here.
 dependency:
   afloesch/megamod/main/.addresslibrary.mm.yml: ">=v0.1.0"
   afloesch/megamod/main/.skse.mm.yml: ">=v2.0.20"
+directory:
+  target: Data
 # optional game metadata
 game:
   # optional, but best practice to include the game executable name

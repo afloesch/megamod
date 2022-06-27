@@ -1,6 +1,8 @@
 # mod dependency list optional
 dependency:
   afloesch/megamod/main/.skse.mm.yml: ">=v2.0.20"
+directory:
+  target: Data
 # optional game metadata
 game:
   # optional, but best practice to include the game executable name

@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/go-resty/resty/v2"
 	"gopkg.in/yaml.v3"
@@ -36,7 +37,7 @@ type Directory struct {
 
 type Manifest struct {
 	Dependency map[string]string `json:"dependency" yaml:"dependency"`
-	Directory  Directory         `json:"directory" yaml:"directory"`
+	Directory  *Directory        `json:"directory" yaml:"directory"`
 	Game       Game              `json:"game" yaml:"game"`
 	Name       string            `json:"name" yaml:"name"`
 	AgeRating  AgeRating         `json:"rating" yaml:"rating"`
@@ -84,7 +85,16 @@ func (m *Manifest) FetchRelease(ctx context.Context, path string) error {
 		return err
 	}
 
-	return m.archive.Unpack(path)
+	src := ""
+	if m.Directory != nil && m.Directory.Source != "" {
+		src = m.Directory.Source
+	}
+
+	dest := cleanpath
+	if m.Directory != nil && m.Directory.Target != "" {
+		dest = filepath.Join(dest, m.Directory.Target)
+	}
+	return m.archive.Unpack(dest, src)
 }
 
 func (m *Manifest) FetchDeps(ctx context.Context, path string) error {
@@ -127,8 +137,9 @@ func (m *Manifest) FlattenDeps(ctx context.Context) ([]*Manifest, error) {
 }
 
 func FetchManifest(ctx context.Context, repo string) (*Manifest, error) {
+	t := time.Now().Unix()
 	resp, err := resty.New().R().SetContext(ctx).
-		Get(fmt.Sprintf("https://raw.githubusercontent.com/%s", repo))
+		Get(fmt.Sprintf("https://raw.githubusercontent.com/%s?%v", repo, t))
 	if err != nil {
 		return nil, err
 	}
