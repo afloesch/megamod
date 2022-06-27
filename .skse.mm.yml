@@ -1,8 +1,11 @@
 # description is optional
 description: SKSE 64bit for Skyrim Special Edition
-# optional extract directory for mod archive relative to 
-# the specified game install folder. (Unix paths)
-directory: /
+directory:
+  # optional source of mod files in archive. default is /
+  source: skse64_2_00_20
+  # optional extract directory for mod archive relative to 
+  # the specified game install folder. default is / (Unix paths)
+  target: /
 # optional game metadata
 game:
   # optional, but best practice to include the game executable name

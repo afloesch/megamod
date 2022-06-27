@@ -1,13 +1,15 @@
 package main
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/afloesch/megamod/internal"
 )
 
 func main() {
-	test, err := internal.FetchManifest("afloesch/megamod/main/.consoleUtilSSE.mm.yml")
+	ctx := context.Background()
+	test, err := internal.FetchManifest(ctx, "afloesch/megamod/main/.consoleUtilSSE.mm.yml")
 	if err != nil {
 		fmt.Println(fmt.Errorf("parse error: %s", err))
 		return
@@ -15,10 +17,29 @@ func main() {
 
 	fmt.Println("manifest", test)
 
-	v1 := internal.SemVersion(">=v2.0.1")
-	v2 := internal.SemVersion("<=v1.6.22-1-dirty")
-	v3 := internal.SemVersion(">=v1.5.23")
+	if len(test.Dependency) > 0 {
+		deps, err := test.FlattenDeps(ctx)
+		if err != nil {
+			fmt.Println(fmt.Errorf("parse error: %s", err))
+			return
+		}
 
-	fmt.Println(v1.Compare(v2))
-	fmt.Println(v2.OpCompare(v3))
+		for _, d := range deps {
+			fmt.Println("dep", d)
+		}
+
+		err = test.FetchDeps(ctx, "./tmp")
+		if err != nil {
+			fmt.Println(fmt.Errorf("fetch deps error: %s", err))
+			return
+		}
+	}
+
+	if test.URL != "" {
+		err = test.FetchRelease(ctx, "./tmp")
+		if err != nil {
+			fmt.Println(fmt.Errorf("fetch error: %s", err))
+			return
+		}
+	}
 }

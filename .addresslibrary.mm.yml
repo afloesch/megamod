@@ -1,9 +1,6 @@
 # mod dependency list optional
 dependency:
   afloesch/megamod/main/.skse.mm.yml: ">=v2.0.20"
-# optional extract directory for mod archive relative to 
-# the specified game install folder. (Unix paths)
-directory: /
 # optional game metadata
 game:
   # optional, but best practice to include the game executable name
