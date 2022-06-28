@@ -39,7 +39,7 @@ func main() {
 		}
 	}
 
-	if test.URL != "" {
+	if len(test.URL) > 0 {
 		fmt.Println("downloading mod:", test.Name)
 		err = test.FetchRelease(ctx, path)
 		if err != nil {

@@ -55,7 +55,7 @@ func (m *Manifest) AllDependencies() map[string]*Manifest {
 }
 
 func (m *Manifest) FetchRelease(ctx context.Context, path string) error {
-	if m.URL == "" {
+	if len(m.URL) == 0 {
 		return nil
 	}
 

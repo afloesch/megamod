@@ -16,6 +16,6 @@ rating:
   esrb: E # one of E, eC, E10+, T, M, AO
 # url optional for mod releases. defaults to releases archive
 url: 
-  - https://github.com/afloesch/megamod/releases/download/v0.1.0/All.in.one-32444-2-1582543914.zip
+  - "https://github.com/afloesch/megamod/releases/download/v0.1.0/All.in.one-32444-2-1582543914.zip"
 # version/tag required
 version: v0.1.0
