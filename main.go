@@ -8,35 +8,40 @@ import (
 )
 
 func main() {
+	path := "./tmp"
 	ctx := context.Background()
-	test, err := internal.FetchManifest(ctx, "afloesch/megamod/main/.consoleUtilSSE.mm.yml")
+	test, err := internal.FetchManifest(ctx, "afloesch/megamod/main/testlist.mm.yml")
 	if err != nil {
 		fmt.Println(fmt.Errorf("parse error: %s", err))
 		return
 	}
 
-	fmt.Println("mod file:", test.URL)
+	fmt.Println("mod:", test.Name)
 
 	if len(test.Dependency) > 0 {
-		err = test.FlattenDeps(ctx)
+		deps, err := test.FetchDepManifests(ctx)
 		if err != nil {
 			fmt.Println(fmt.Errorf("parse error: %s", err))
 			return
 		}
 
-		for _, v := range test.AllDependencies() {
-			fmt.Println("dependency:", v.URL)
+		for _, d := range deps {
+			fmt.Println("mod dep:", d.Name)
 		}
 
-		err = test.FetchDeps(ctx, "./tmp")
-		if err != nil {
-			fmt.Println(fmt.Errorf("fetch deps error: %s", err))
-			return
+		for _, d := range deps {
+			fmt.Println("downloading mod:", d.Name)
+			err = d.FetchRelease(ctx, path)
+			if err != nil {
+				fmt.Println(fmt.Errorf("fetch deps error: %s", err))
+				return
+			}
 		}
 	}
 
 	if test.URL != "" {
-		err = test.FetchRelease(ctx, "./tmp")
+		fmt.Println("downloading mod:", test.Name)
+		err = test.FetchRelease(ctx, path)
 		if err != nil {
 			fmt.Println(fmt.Errorf("fetch error: %s", err))
 			return

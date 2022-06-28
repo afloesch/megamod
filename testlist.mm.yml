@@ -1,0 +1,6 @@
+description: test mod list
+dependency:
+  afloesch/megamod/main/.consoleUtilSSE.mm.yml: ">=1.3.2"
+  afloesch/sse-sos/master/.mm.yml: ">=1.0.0"
+name: My cool mods
+version: v1.0.0

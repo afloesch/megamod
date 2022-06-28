@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"fmt"
 	"path/filepath"
 	"strings"
 )
@@ -14,7 +15,7 @@ const RarFileExtension FileExtension = ".rar"
 // UnknownFileExtension is for an unknown archive file format.
 const UnknownFileExtension FileExtension = ""
 
-// FileExtension is the archive file extension.
+// FileExtension is a file extension string.
 type FileExtension string
 
 // archiveData is common to any archive format.
@@ -69,4 +70,20 @@ func NewArchive(path string) Archive {
 	}*/
 
 	return &UnknownArchive{d}
+}
+
+func getFilename(url string) string {
+	parts := strings.Split(url, "/")
+	return parts[len(parts)-1]
+}
+
+func sanitizeName(name string) string {
+	clean := strings.ReplaceAll(name, " ", "-")
+	clean = strings.ReplaceAll(clean, "/", "-")
+	return strings.ReplaceAll(clean, "\\", "-")
+}
+
+func GetArchivePath(name, path, url string) string {
+	n := fmt.Sprintf("mm-%s-%s", sanitizeName(name), getFilename(url))
+	return filepath.Join(path, n)
 }

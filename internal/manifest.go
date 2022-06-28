@@ -6,12 +6,13 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 	"time"
 
 	"github.com/go-resty/resty/v2"
 	"gopkg.in/yaml.v3"
 )
+
+const yamlFileExt string = ".mm.yml"
 
 const ESRBERating ESRBString = "E"
 const ESRBEPlusRating ESRBString = "E10+"
@@ -22,26 +23,25 @@ const ESRBAdultRating ESRBString = "AO"
 type ESRBString string
 
 type Game struct {
-	Executable string `json:"executable" yaml:"executable"`
-	Version    string `json:"version" yaml:"version"`
+	Executable string `json:"executable,omitempty" yaml:"executable,omitempty"`
+	Version    string `json:"version,omitempty" yaml:"version,omitempty"`
 }
 
 type AgeRating struct {
-	ESRB ESRBString `json:"esrb" yaml:"esrb"`
+	ESRB ESRBString `json:"esrb,omitempty" yaml:"esrb,omitempty"`
 }
 
 type Directory struct {
-	Source string `json:"source" yaml:"source"`
-	Target string `json:"target" yaml:"target"`
+	Source string `json:"source,omitempty" yaml:"source,omitempty"`
+	Target string `json:"target,omitempty" yaml:"target,omitempty"`
 }
 
 type Manifest struct {
-	Dependency map[string]string `json:"dependency" yaml:"dependency"`
-	Directory  *Directory        `json:"directory" yaml:"directory"`
-	Game       Game              `json:"game" yaml:"game"`
-	Name       string            `json:"name" yaml:"name"`
-	AgeRating  AgeRating         `json:"rating" yaml:"rating"`
-	Schema     string            `json:"schema" yaml:"schema"`
+	Dependency map[string]string `json:"dependency,omitempty" yaml:"dependency,omitempty"`
+	Directory  *Directory        `json:"directory,omitempty" yaml:"directory,omitempty"`
+	Game       Game              `json:"game,omitempty" yaml:"game,omitempty"`
+	Name       string            `json:"name,omitempty" yaml:"name,omitempty"`
+	AgeRating  AgeRating         `json:"rating,omitempty" yaml:"rating,omitempty"`
 	URL        string            `json:"url" yaml:"url"`
 	Version    string            `json:"version" yaml:"version"`
 
@@ -66,18 +66,16 @@ func (m *Manifest) FetchRelease(ctx context.Context, path string) error {
 		}
 	}
 
-	resp, err := resty.New().R().SetContext(ctx).SetDoNotParseResponse(true).
+	resp, err := resty.New().R().
+		SetContext(ctx).
+		SetDoNotParseResponse(true).
 		Get(m.URL)
 	if err != nil {
 		return err
 	}
 	defer resp.RawBody().Close()
 
-	parts := strings.Split(m.URL, "/")
-	fname := parts[len(parts)-1]
-	location := filepath.Join(cleanpath, fname)
-	m.archive = NewArchive(location)
-
+	m.archive = NewArchive(GetArchivePath(m.Name, cleanpath, m.URL))
 	out, err := os.Create(m.archive.Location())
 	if err != nil {
 		return err
@@ -89,7 +87,9 @@ func (m *Manifest) FetchRelease(ctx context.Context, path string) error {
 		return err
 	}
 
-	src := ""
+	return m.writeManifest()
+
+	/*src := ""
 	if m.Directory != nil && m.Directory.Source != "" {
 		src = m.Directory.Source
 	}
@@ -98,41 +98,20 @@ func (m *Manifest) FetchRelease(ctx context.Context, path string) error {
 	if m.Directory != nil && m.Directory.Target != "" {
 		dest = filepath.Join(dest, m.Directory.Target)
 	}
-	return m.archive.Unpack(dest, src)
+	return m.archive.Unpack(dest, src)*/
 }
 
-func (m *Manifest) FetchDeps(ctx context.Context, path string) error {
-	for _, v := range m.allDeps {
-		err := v.FetchRelease(ctx, path)
-		if err != nil {
-			return err
-		}
+func (m *Manifest) writeManifest() error {
+	content, err := yaml.Marshal(m)
+	if err != nil {
+		return err
 	}
 
-	return nil
-}
-
-func (m *Manifest) FlattenDeps(ctx context.Context) error {
-	for k := range m.Dependency {
-		var d *Manifest
-		if m.allDeps[k] == nil {
-			d, err := FetchManifest(ctx, k)
-			if err != nil {
-				return err
-			}
-
-			m.allDeps[k] = d
-		}
-
-		if d != nil && len(d.Dependency) > 0 {
-			err := d.FlattenDeps(ctx)
-			if err != nil {
-				return err
-			}
-		}
-	}
-
-	return nil
+	return os.WriteFile(
+		fmt.Sprintf("%s%s", m.archive.Location(), yamlFileExt),
+		content,
+		0644,
+	)
 }
 
 func FetchManifest(ctx context.Context, repo string) (*Manifest, error) {
@@ -144,6 +123,37 @@ func FetchManifest(ctx context.Context, repo string) (*Manifest, error) {
 	}
 
 	return ParseYAMLManifest(resp.Body())
+}
+
+func (m *Manifest) FetchDepManifests(ctx context.Context) (map[string]*Manifest, error) {
+
+	for k := range m.Dependency {
+		var d *Manifest
+		var err error
+
+		if m.allDeps[k] == nil {
+			d, err = FetchManifest(ctx, k)
+			if err != nil {
+				return nil, err
+			}
+			m.allDeps[k] = d
+		}
+
+		if d != nil && len(d.Dependency) > 0 {
+			sub, err := d.FetchDepManifests(ctx)
+			if err != nil {
+				return nil, err
+			}
+
+			for k, v := range sub {
+				if m.allDeps[k] == nil {
+					m.allDeps[k] = v
+				}
+			}
+		}
+	}
+
+	return m.allDeps, nil
 }
 
 func ParseManifestFromFile(fpath string) (*Manifest, error) {
