@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"strings"
+	"time"
 )
 
 // TarballFileExtension is the file extension for a tarball.
@@ -84,6 +85,10 @@ func sanitizeName(name string) string {
 }
 
 func GetArchivePath(name, path, url string) string {
-	n := fmt.Sprintf("mm-%s-%s", sanitizeName(name), getFilename(url))
-	return filepath.Join(path, n)
+	return filepath.Join(path, fmt.Sprintf(
+		"%v-%s-%s",
+		time.Now().Unix(),
+		sanitizeName(name),
+		getFilename(url),
+	))
 }

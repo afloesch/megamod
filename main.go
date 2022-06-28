@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	path := "./tmp"
+	path := "./tmp/archive"
 	ctx := context.Background()
 	test, err := internal.FetchManifest(ctx, "afloesch/megamod/main/testlist.mm.yml")
 	if err != nil {

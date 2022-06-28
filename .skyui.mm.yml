@@ -10,7 +10,7 @@ game:
   # gameVersion optional, defaults to all versions. Used to enforce game version compatibility between mods
   version: "<=v1.5.97"
 # name is optional will default to the repo name
-name: SKSE SSE
+name: SkyUI
 # mod ESRB rating. if none specified then mod is safe for all ages.
 rating:
   esrb: E # one of E, eC, E10+, T, M, AO
