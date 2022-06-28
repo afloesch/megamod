@@ -15,6 +15,7 @@ name: SkyUI
 rating:
   esrb: E # one of E, eC, E10+, T, M, AO
 # url optional for mod releases. defaults to releases archive
-url: "https://github.com/afloesch/megamod/releases/download/v0.1.0/SkyUI_5_2_SE-12604-5-2SE.7z"
+url: 
+  - "https://github.com/afloesch/megamod/releases/download/v0.1.0/SkyUI_5_2_SE-12604-5-2SE.7z"
 # version/tag required
 version: v0.1.0

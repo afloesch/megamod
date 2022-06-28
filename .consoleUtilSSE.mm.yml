@@ -19,6 +19,7 @@ name: ConsoleUtilSSE
 rating:
   esrb: E # one of E, eC, E10+, T, M, AO
 # url optional for mod releases. defaults to releases archive
-url: https://github.com/Ryan-rsm-McKenzie/ConsoleUtilSSE/releases/download/1.3.2/ConsoleUtilSSE.zip
+url: 
+  - https://github.com/Ryan-rsm-McKenzie/ConsoleUtilSSE/releases/download/1.3.2/ConsoleUtilSSE.zip
 # version/tag required
 version: v1.3.2

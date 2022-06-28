@@ -37,12 +37,13 @@ type Directory struct {
 }
 
 type Manifest struct {
+	AgeRating  AgeRating         `json:"rating,omitempty" yaml:"rating,omitempty"`
 	Dependency map[string]string `json:"dependency,omitempty" yaml:"dependency,omitempty"`
 	Directory  *Directory        `json:"directory,omitempty" yaml:"directory,omitempty"`
 	Game       Game              `json:"game,omitempty" yaml:"game,omitempty"`
+	License    string            `json:"license,omitempty" yaml:"license,omitempty"`
 	Name       string            `json:"name,omitempty" yaml:"name,omitempty"`
-	AgeRating  AgeRating         `json:"rating,omitempty" yaml:"rating,omitempty"`
-	URL        string            `json:"url" yaml:"url"`
+	URL        []string          `json:"url" yaml:"url"`
 	Version    string            `json:"version" yaml:"version"`
 
 	archive Archive
@@ -66,25 +67,27 @@ func (m *Manifest) FetchRelease(ctx context.Context, path string) error {
 		}
 	}
 
-	resp, err := resty.New().R().
-		SetContext(ctx).
-		SetDoNotParseResponse(true).
-		Get(m.URL)
-	if err != nil {
-		return err
-	}
-	defer resp.RawBody().Close()
+	for _, u := range m.URL {
+		resp, err := resty.New().R().
+			SetContext(ctx).
+			SetDoNotParseResponse(true).
+			Get(u)
+		if err != nil {
+			return err
+		}
+		defer resp.RawBody().Close()
 
-	m.archive = NewArchive(GetArchivePath(m.Name, cleanpath, m.URL))
-	out, err := os.Create(m.archive.Location())
-	if err != nil {
-		return err
-	}
-	defer out.Close()
+		m.archive = NewArchive(GetArchivePath(m.Name, cleanpath, u))
+		out, err := os.Create(m.archive.Location())
+		if err != nil {
+			return err
+		}
+		defer out.Close()
 
-	_, err = out.ReadFrom(resp.RawBody())
-	if err != nil {
-		return err
+		_, err = out.ReadFrom(resp.RawBody())
+		if err != nil {
+			return err
+		}
 	}
 
 	return m.writeManifest()
