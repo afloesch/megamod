@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"strings"
 
 	"github.com/go-resty/resty/v2"
@@ -32,9 +33,9 @@ func (r Repo) FetchManifest(ctx context.Context, version SemVer) (*Manifest, err
 	if err != nil {
 		return nil, err
 	}
-	defer resp.RawBody().Close()
+	defer resp.Body.Close()
 
-	data, err := ioutil.ReadAll(resp.RawBody())
+	data, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}
@@ -49,8 +50,8 @@ func (r Repo) FetchManifest(ctx context.Context, version SemVer) (*Manifest, err
 	return mani, nil
 }
 
-func (r Repo) FetchReleaseFile(ctx context.Context, version *Version, file string) (*resty.Response, error) {
-	return resty.
+func (r Repo) FetchReleaseFile(ctx context.Context, version *Version, file string) (*http.Response, error) {
+	res, err := resty.
 		New().
 		R().
 		SetDoNotParseResponse(true).
@@ -61,4 +62,6 @@ func (r Repo) FetchReleaseFile(ctx context.Context, version *Version, file strin
 			version.String(),
 			file,
 		))
+
+	return res.RawResponse, err
 }

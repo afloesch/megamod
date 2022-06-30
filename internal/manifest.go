@@ -37,10 +37,10 @@ func (m *Manifest) DownloadReleaseFiles(ctx context.Context, path string) error 
 		}
 	}
 
-	return m.writeManifest(path)
+	return m.WriteFile(path)
 }
 
-func (m *Manifest) writeManifest(path string) error {
+func (m *Manifest) WriteFile(path string) error {
 	content, err := yaml.Marshal(m)
 	if err != nil {
 		return err

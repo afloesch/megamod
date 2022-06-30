@@ -32,7 +32,7 @@ func (f *ReleaseFile) Download(ctx context.Context, path string, m *Manifest) er
 	if err != nil {
 		return err
 	}
-	defer resp.RawBody().Close()
+	defer resp.Body.Close()
 
 	f.archive = NewArchive(
 		fmt.Sprintf("%s-%s-%s", m.Repo.Name(), m.Version.Get().String(), f.Filename),
@@ -44,7 +44,7 @@ func (f *ReleaseFile) Download(ctx context.Context, path string, m *Manifest) er
 	}
 	defer out.Close()
 
-	_, err = out.ReadFrom(resp.RawBody())
+	_, err = out.ReadFrom(resp.Body)
 	if err != nil {
 		return err
 	}
