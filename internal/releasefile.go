@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 )
 
+// ReleaseFile is an archived file for a mod release, hosted on GitHub releases.
 type ReleaseFile struct {
 	Filename string `json:"filename,omitempty" yaml:"filename,omitempty"`
 	Source   string `json:"source,omitempty" yaml:"source,omitempty"`
@@ -15,6 +16,7 @@ type ReleaseFile struct {
 	archive Archive `json:"archive,omitempty" yaml:"archive,omitempty"`
 }
 
+// Download fetches and writes the release file to system at the given folder path.
 func (f *ReleaseFile) Download(ctx context.Context, path string, m *Manifest) error {
 	if m == nil {
 		return fmt.Errorf("nil manifest")
