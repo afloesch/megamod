@@ -4,138 +4,108 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path/filepath"
-	"time"
 
 	"github.com/go-resty/resty/v2"
 	"gopkg.in/yaml.v3"
 )
 
-const yamlFileExt string = ".mm.yml"
-
-const ESRBERating ESRBString = "E"
-const ESRBEPlusRating ESRBString = "E10+"
-const ESRBTeenRating ESRBString = "T"
-const ESRBMatureRating ESRBString = "M"
-const ESRBAdultRating ESRBString = "AO"
-
-type ESRBString string
+const manifestName string = "swiz.zle"
 
 type Game struct {
 	Executable string `json:"executable,omitempty" yaml:"executable,omitempty"`
 	Version    string `json:"version,omitempty" yaml:"version,omitempty"`
 }
 
-type AgeRating struct {
-	ESRB ESRBString `json:"esrb,omitempty" yaml:"esrb,omitempty"`
-}
-
-type Directory struct {
-	Source string `json:"source,omitempty" yaml:"source,omitempty"`
-	Target string `json:"target,omitempty" yaml:"target,omitempty"`
-}
-
 type Manifest struct {
-	AgeRating  AgeRating         `json:"rating,omitempty" yaml:"rating,omitempty"`
-	Dependency map[string]string `json:"dependency,omitempty" yaml:"dependency,omitempty"`
-	Directory  *Directory        `json:"directory,omitempty" yaml:"directory,omitempty"`
-	Game       Game              `json:"game,omitempty" yaml:"game,omitempty"`
-	License    string            `json:"license,omitempty" yaml:"license,omitempty"`
-	Name       string            `json:"name,omitempty" yaml:"name,omitempty"`
-	URL        []string          `json:"url" yaml:"url"`
-	Version    string            `json:"version" yaml:"version"`
-
-	archive Archive
-	allDeps map[string]*Manifest
+	AgeRating   AgeRating         `json:"ages,omitempty" yaml:"ages,omitempty"`
+	Dependency  map[string]string `json:"dependency,omitempty" yaml:"dependency,omitempty"`
+	Description string            `json:"description,omitempty" yaml:"description,omitempty"`
+	Files       []ReleaseFile     `json:"files,omitempty" yaml:"files,omitempty"`
+	Game        Game              `json:"game,omitempty" yaml:"game,omitempty"`
+	License     string            `json:"license,omitempty" yaml:"license,omitempty"`
+	Name        string            `json:"name,omitempty" yaml:"name,omitempty"`
+	Repo        Repo              `json:"repo,omitempty" yaml:"repo,omitempty"`
+	Version     SemVer            `json:"version,omitempty" yaml:"version,omitempty"`
 }
 
-func (m *Manifest) AllDependencies() map[string]*Manifest {
-	return m.allDeps
+func (m *Manifest) DownloadReleaseFiles(ctx context.Context, path string) error {
+	for _, f := range m.Files {
+		err := f.Download(ctx, path, m)
+		if err != nil {
+			return err
+		}
+	}
+
+	return m.writeManifest(path)
 }
 
-func (m *Manifest) FetchRelease(ctx context.Context, path string) error {
-	if len(m.URL) == 0 {
-		return nil
-	}
-
-	cleanpath := filepath.Clean(path)
-	if _, err := os.Stat(cleanpath); err != nil {
-		err = os.MkdirAll(cleanpath, 0755)
-		if err != nil {
-			return err
-		}
-	}
-
-	for _, u := range m.URL {
-		resp, err := resty.New().R().
-			SetContext(ctx).
-			SetDoNotParseResponse(true).
-			Get(u)
-		if err != nil {
-			return err
-		}
-		defer resp.RawBody().Close()
-
-		m.archive = NewArchive(GetArchivePath(m.Name, cleanpath, u))
-		out, err := os.Create(m.archive.Location())
-		if err != nil {
-			return err
-		}
-		defer out.Close()
-
-		_, err = out.ReadFrom(resp.RawBody())
-		if err != nil {
-			return err
-		}
-	}
-
-	return m.writeManifest()
-
-	/*src := ""
-	if m.Directory != nil && m.Directory.Source != "" {
-		src = m.Directory.Source
-	}
-
-	dest := cleanpath
-	if m.Directory != nil && m.Directory.Target != "" {
-		dest = filepath.Join(dest, m.Directory.Target)
-	}
-	return m.archive.Unpack(dest, src)*/
-}
-
-func (m *Manifest) writeManifest() error {
+func (m *Manifest) writeManifest(path string) error {
 	content, err := yaml.Marshal(m)
 	if err != nil {
 		return err
 	}
 
-	return os.WriteFile(
-		fmt.Sprintf("%s%s", m.archive.Location(), yamlFileExt),
-		content,
-		0644,
+	fname := fmt.Sprintf(
+		"%s-%s.%s",
+		m.Repo.Name(),
+		m.Version.Get().String(),
+		manifestName,
 	)
+	fpath := filepath.Clean(filepath.Join(path, fname))
+	return os.WriteFile(fpath, content, 0644)
 }
 
-func FetchManifest(ctx context.Context, repo string) (*Manifest, error) {
-	t := time.Now().Unix()
-	resp, err := resty.New().R().SetContext(ctx).
-		Get(fmt.Sprintf("https://raw.githubusercontent.com/%s?%v", repo, t))
+func fetchReleaseFile(ctx context.Context, repo Repo, version *Version, file string) (*resty.Response, error) {
+	return resty.
+		New().
+		R().
+		SetDoNotParseResponse(true).
+		SetContext(ctx).
+		Get(fmt.Sprintf(
+			"https://github.com/%s/releases/download/%s/%s",
+			repo.String(),
+			version.String(),
+			file,
+		))
+}
+
+func FetchManifest(ctx context.Context, repo Repo, version SemVer) (*Manifest, error) {
+	resp, err := fetchReleaseFile(ctx, repo, version.Get(), manifestName)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.RawBody().Close()
+
+	data, err := ioutil.ReadAll(resp.RawBody())
 	if err != nil {
 		return nil, err
 	}
 
-	return ParseYAMLManifest(resp.Body())
+	mani, ymlErr := ParseYAMLManifest(data)
+	if ymlErr != nil {
+		var jsonErr error
+		mani, jsonErr = ParseJSONManifest(data)
+		if jsonErr != nil {
+			return nil, fmt.Errorf("invalid syntax: %s : %s", ymlErr, jsonErr)
+		}
+	}
+
+	mani.Repo = repo
+	mani.Version = version
+	return mani, nil
 }
 
-func (m *Manifest) FetchDepManifests(ctx context.Context) (map[string]*Manifest, error) {
+/*func (m *Manifest) FetchDepManifests(ctx context.Context) (map[string]*Manifest, error) {
 
 	for k := range m.Dependency {
 		var d *Manifest
 		var err error
 
 		if m.allDeps[k] == nil {
-			d, err = FetchManifest(ctx, k)
+			d, err = FetchManifest(ctx, k, ver)
 			if err != nil {
 				return nil, err
 			}
@@ -157,38 +127,16 @@ func (m *Manifest) FetchDepManifests(ctx context.Context) (map[string]*Manifest,
 	}
 
 	return m.allDeps, nil
-}
-
-func ParseManifestFromFile(fpath string) (*Manifest, error) {
-	data, err := os.ReadFile(filepath.Clean(fpath))
-	if err != nil {
-		return nil, err
-	}
-
-	man, err := ParseYAMLManifest(data)
-	if err != nil {
-		return nil, err
-	}
-
-	return man, nil
-}
+}*/
 
 func ParseYAMLManifest(data []byte) (*Manifest, error) {
 	var manifest Manifest
 	err := yaml.Unmarshal(data, &manifest)
-	if err != nil {
-		return nil, err
-	}
-	manifest.allDeps = map[string]*Manifest{}
-	return &manifest, nil
+	return &manifest, err
 }
 
 func ParseJSONManifest(data []byte) (*Manifest, error) {
 	var manifest Manifest
 	err := json.Unmarshal(data, &manifest)
-	if err != nil {
-		return nil, err
-	}
-	manifest.allDeps = map[string]*Manifest{}
-	return &manifest, nil
+	return &manifest, err
 }

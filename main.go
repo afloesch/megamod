@@ -10,15 +10,19 @@ import (
 func main() {
 	path := "./tmp/archive"
 	ctx := context.Background()
-	test, err := internal.FetchManifest(ctx, "afloesch/megamod/main/testlist.mm.yml")
+	test, err := internal.FetchManifest(
+		ctx,
+		internal.Repo("afloesch/megamod"),
+		internal.SemVer("v0.1.1"),
+	)
 	if err != nil {
 		fmt.Println(fmt.Errorf("parse error: %s", err))
 		return
 	}
 
-	fmt.Println("mod:", test.Name)
+	fmt.Println("mod:", test)
 
-	if len(test.Dependency) > 0 {
+	/*if len(test.Dependency) > 0 {
 		deps, err := test.FetchDepManifests(ctx)
 		if err != nil {
 			fmt.Println(fmt.Errorf("parse error: %s", err))
@@ -37,11 +41,11 @@ func main() {
 				return
 			}
 		}
-	}
+	}*/
 
-	if len(test.URL) > 0 {
+	if len(test.Files) > 0 {
 		fmt.Println("downloading mod:", test.Name)
-		err = test.FetchRelease(ctx, path)
+		err = test.DownloadReleaseFiles(ctx, path)
 		if err != nil {
 			fmt.Println(fmt.Errorf("fetch error: %s", err))
 			return

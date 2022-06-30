@@ -18,7 +18,6 @@ name: SKSE SSE
 rating:
   esrb: E # one of E, eC, E10+, T, M, AO
 # url optional for mod releases. defaults to releases archive
-url: 
-  - "https://github.com/ianpatt/skse64/releases/download/v2.0.20/skse64_2_00_20.7z"
+
 # version/tag required
 version: v2.0.20

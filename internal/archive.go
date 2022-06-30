@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"path/filepath"
 	"strings"
-	"time"
 )
 
 // TarballFileExtension is the file extension for a tarball.
@@ -21,8 +20,7 @@ type FileExtension string
 
 // archiveData is common to any archive format.
 type archiveData struct {
-	location  string
-	extension FileExtension
+	location string
 }
 
 // Archive defines the interface for working with different.
@@ -42,23 +40,20 @@ func (a UnknownArchive) Location() string {
 }
 
 func (a UnknownArchive) Unpack(dst, src string) error {
-	return nil
+	return fmt.Errorf("unknown archive format")
 }
 
 // NewArchive returns an Archive object for a file at a given path.
-func NewArchive(path string) Archive {
+func NewArchive(filename, path string) Archive {
 	d := archiveData{
-		location:  filepath.Clean(path),
-		extension: UnknownFileExtension,
+		location: filepath.Clean(filepath.Join(path, filename)),
 	}
 
 	if strings.HasSuffix(d.location, string(ZipFileExtension)) {
-		d.extension = ZipFileExtension
 		return &ZipArchive{d}
 	}
 
 	if strings.HasSuffix(d.location, string(SevenZFileExtension)) {
-		d.extension = SevenZFileExtension
 		return &SevenZArchive{d}
 	}
 
@@ -71,24 +66,4 @@ func NewArchive(path string) Archive {
 	}*/
 
 	return &UnknownArchive{d}
-}
-
-func getFilename(url string) string {
-	parts := strings.Split(url, "/")
-	return parts[len(parts)-1]
-}
-
-func sanitizeName(name string) string {
-	clean := strings.ReplaceAll(name, " ", "-")
-	clean = strings.ReplaceAll(clean, "/", "-")
-	return strings.ReplaceAll(clean, "\\", "-")
-}
-
-func GetArchivePath(name, path, url string) string {
-	return filepath.Join(path, fmt.Sprintf(
-		"%v-%s-%s",
-		time.Now().Unix(),
-		sanitizeName(name),
-		getFilename(url),
-	))
 }
