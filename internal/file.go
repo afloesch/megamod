@@ -28,7 +28,7 @@ func (f *ReleaseFile) Download(ctx context.Context, path string, m *Manifest) er
 		}
 	}
 
-	resp, err := fetchReleaseFile(ctx, m.Repo, m.Version.Get(), f.Filename)
+	resp, err := m.Repo.FetchReleaseFile(ctx, m.Version.Get(), f.Filename)
 	if err != nil {
 		return err
 	}

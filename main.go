@@ -10,42 +10,18 @@ import (
 func main() {
 	path := "./tmp/archive"
 	ctx := context.Background()
-	test, err := internal.FetchManifest(
-		ctx,
-		internal.Repo("afloesch/megamod"),
-		internal.SemVer("v0.1.1"),
-	)
+	repo := internal.Repo("afloesch/megamod")
+	mod, err := repo.FetchManifest(ctx, internal.SemVer("v0.1.1"))
 	if err != nil {
 		fmt.Println(fmt.Errorf("parse error: %s", err))
 		return
 	}
 
-	fmt.Println("mod:", test)
+	fmt.Println("mod:", mod)
 
-	/*if len(test.Dependency) > 0 {
-		deps, err := test.FetchDepManifests(ctx)
-		if err != nil {
-			fmt.Println(fmt.Errorf("parse error: %s", err))
-			return
-		}
-
-		for _, d := range deps {
-			fmt.Println("mod dep:", d.Name)
-		}
-
-		for _, d := range deps {
-			fmt.Println("downloading mod:", d.Name)
-			err = d.FetchRelease(ctx, path)
-			if err != nil {
-				fmt.Println(fmt.Errorf("fetch deps error: %s", err))
-				return
-			}
-		}
-	}*/
-
-	if len(test.Files) > 0 {
-		fmt.Println("downloading mod:", test.Name)
-		err = test.DownloadReleaseFiles(ctx, path)
+	if len(mod.Files) > 0 {
+		fmt.Println("downloading mod:", mod.Name)
+		err = mod.DownloadReleaseFiles(ctx, path)
 		if err != nil {
 			fmt.Println(fmt.Errorf("fetch error: %s", err))
 			return

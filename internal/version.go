@@ -15,10 +15,6 @@ type versionOperator string
 
 type SemVer string
 
-func (s SemVer) String() string {
-	return string(s)
-}
-
 // Version is a semantic version augmented with a VersionOperator
 // for finer grained versioning rules.
 type Version struct {
@@ -84,6 +80,10 @@ func (v *Version) Compare(d *Version) int {
 	}
 
 	return 0
+}
+
+func (s SemVer) String() string {
+	return string(s)
 }
 
 // Version parses a semantic version string to a Version object.
