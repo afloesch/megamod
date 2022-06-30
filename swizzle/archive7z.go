@@ -1,37 +1,37 @@
-package internal
+package swizzle
 
 import (
-	"archive/zip"
 	"io"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/bodgit/sevenzip"
 )
 
-const ZipFileExtension FileExtension = ".zip"
+const SevenZFileExtension FileExtension = ".7z"
 
-type ZipArchive struct {
+type SevenZArchive struct {
 	archiveData
 }
 
-func (a ZipArchive) Location() string {
+func (a SevenZArchive) Location() string {
 	return a.location
 }
 
-func (a ZipArchive) Unpack(dst string, src string) error {
-	f, err := zip.OpenReader(a.location)
+func (a SevenZArchive) Unpack(dst string, src string) error {
+	f, err := sevenzip.OpenReader(a.location)
 	if err != nil {
 		return err
 	}
-	defer f.Close()
 
-	for _, f := range f.File {
-		filePath := filepath.Clean(filepath.Join(dst, strings.Replace(f.Name, src, "", 1)))
+	for _, file := range f.File {
+		filePath := filepath.Clean(filepath.Join(dst, strings.Replace(file.Name, src, "", 1)))
 		/*if !strings.HasPrefix(filePath, filepath.Clean(dst)+string(os.PathSeparator)) {
 			return fmt.Errorf("invalid file path")
 		}*/
 
-		if f.FileInfo().IsDir() {
+		if file.FileInfo().IsDir() {
 			os.MkdirAll(filePath, os.ModePerm)
 			continue
 		}
@@ -40,12 +40,12 @@ func (a ZipArchive) Unpack(dst string, src string) error {
 			return err
 		}
 
-		dstFile, err := os.OpenFile(filePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.Mode())
+		dstFile, err := os.OpenFile(filePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, file.Mode())
 		if err != nil {
 			return err
 		}
 
-		fileInArchive, err := f.Open()
+		fileInArchive, err := file.Open()
 		if err != nil {
 			return err
 		}

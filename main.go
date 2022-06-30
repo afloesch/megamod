@@ -4,14 +4,14 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/afloesch/megamod/internal"
+	"github.com/afloesch/megamod/swizzle"
 )
 
 func main() {
 	path := "./tmp/archive"
 	ctx := context.Background()
-	repo := internal.Repo("afloesch/megamod")
-	mod, err := repo.FetchManifest(ctx, internal.SemVer("v0.1.1"))
+	repo := swizzle.Repo("afloesch/megamod")
+	mod, err := repo.FetchManifest(ctx, swizzle.SemVer("v0.1.1"))
 	if err != nil {
 		fmt.Println(fmt.Errorf("parse error: %s", err))
 		return

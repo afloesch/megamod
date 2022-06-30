@@ -1,4 +1,4 @@
-package internal
+package swizzle
 
 const ESRBERating ESRBString = "E"
 const ESRBEPlusRating ESRBString = "E10+"
