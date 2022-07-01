@@ -34,11 +34,12 @@ func (r Repo) Organization() string {
 
 // Name returns the repo name.
 func (r Repo) Name() string {
-	parts := strings.Split(r.String(), "/")
+	s := r.String()
+	parts := strings.Split(s, "/")
 	if len(parts) > 1 {
 		return parts[1]
 	}
-	return r.Name()
+	return s
 }
 
 // String return the full repo name as a string.
@@ -115,7 +116,7 @@ func (r Repo) FetchReleaseFile(ctx context.Context, version *Version, file strin
 	}
 
 	if release == nil {
-		return nil, fmt.Errorf("release not found for %s", version.String())
+		return nil, fmt.Errorf("no release for version '%s'", version.String())
 	}
 
 	for _, d := range release.Assets {
@@ -125,7 +126,7 @@ func (r Repo) FetchReleaseFile(ctx context.Context, version *Version, file strin
 	}
 
 	if asset == nil {
-		return nil, fmt.Errorf("release file %s not found for %s", file, version.String())
+		return nil, fmt.Errorf("release file '%s' not found for version '%s'", file, version.String())
 	}
 
 	url := asset.BrowserDownloadURL
@@ -135,7 +136,7 @@ func (r Repo) FetchReleaseFile(ctx context.Context, version *Version, file strin
 		Get(*url)
 
 	if res.StatusCode() == 404 {
-		return nil, fmt.Errorf("release file %s not found for %s", file, version.String())
+		return nil, fmt.Errorf("release file '%s' not found for version '%s'", file, version.String())
 	}
 
 	return res.RawResponse, err

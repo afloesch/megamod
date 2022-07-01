@@ -13,10 +13,18 @@ import (
 
 const manifestName string = "swiz.zle"
 
-// Game is the supported game and game version for a mod.
+// Game is the supported game and game version for a mod release. Specifying
+// the game values are optional, but encouraged to enable version and game
+// compatibility checks between mod dependencies.
 type Game struct {
+	// Executable is the supported game executable file name, including the
+	// file extension.
 	Executable string `json:"executable,omitempty" yaml:"executable,omitempty"`
-	Version    SemVer `json:"version,omitempty" yaml:"version,omitempty"`
+
+	// The supported game version/(s) for the mod based on a SemVer semantic
+	// string format. An empty version is equivalent to >=v0.0.0 and so will
+	// match all game versions.
+	Version SemVer `json:"version,omitempty" yaml:"version,omitempty"`
 }
 
 // Manifest defines the swiz.zle file format for a mod release.
@@ -54,6 +62,31 @@ type Manifest struct {
 
 	// Mod version. Must use semantic versioning.
 	Version SemVer `json:"version,omitempty" yaml:"version,omitempty"`
+}
+
+// New creates an empty swizzle manifest.
+func New() *Manifest {
+	return &Manifest{
+		Dependency: map[Repo]SemVer{},
+	}
+}
+
+func (m *Manifest) SetGame(executable, version string) *Manifest {
+	m.Game = Game{
+		Executable: executable,
+		Version:    SemVer(version),
+	}
+	return m
+}
+
+func (m *Manifest) SetRepo(repo string) *Manifest {
+	m.Repo = Repo(repo)
+	return m
+}
+
+func (m *Manifest) SetVersion(version string) *Manifest {
+	m.Version = SemVer(version)
+	return m
 }
 
 // AddDependency gets the specified release manifest and adds it and all dependencies
@@ -126,15 +159,15 @@ func (m *Manifest) WriteFile(path string) error {
 }
 
 // ReadFile parses a manifest file from the file system at the given path.
-func (m *Manifest) ReadFile(path string) error {
+func (m *Manifest) ReadFile(path string) (*Manifest, error) {
 	b, err := ioutil.ReadFile(filepath.Clean(path))
 	if err != nil {
-		return err
+		return m, err
 	}
 
 	parsed, err := ParseManifest(b)
 	*m = *parsed
-	return err
+	return m, err
 }
 
 /*
@@ -149,6 +182,10 @@ func ParseManifest(data []byte) (*Manifest, error) {
 		if jsonErr != nil {
 			return nil, fmt.Errorf("invalid manifest: %s : %s", ymlErr, jsonErr)
 		}
+	}
+
+	if manifest.Dependency == nil {
+		manifest.Dependency = map[Repo]SemVer{}
 	}
 
 	return manifest, nil
