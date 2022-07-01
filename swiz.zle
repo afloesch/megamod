@@ -1,6 +1,6 @@
 description: Utility for making nice game interfaces.
 files:
-  - filename: SkyUI_5_2_SE-12604-5-2SE.7z
+  - name: SkyUI_5_2_SE-12604-5-2SE.7z
     destination: Data
 game:
   # optional, but best practice to include the game executable name

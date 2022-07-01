@@ -10,7 +10,7 @@ import (
 // ReleaseFile is an archived file for a mod release, hosted on GitHub releases.
 type ReleaseFile struct {
 	// Release file name.
-	Filename string `json:"filename,omitempty" yaml:"filename,omitempty"`
+	Name string `json:"name,omitempty" yaml:"name,omitempty"`
 
 	// Source is the path to mod content inside the release archive. Default is to the
 	// root of the archive.
@@ -18,7 +18,7 @@ type ReleaseFile struct {
 
 	// Dest is the folder path, relative to the game directory, where the mod content
 	// should be installed. Default is to the root of the game directory.
-	Dest string `json:"destination,omitempty" yaml:"destination,omitempty"`
+	Destination string `json:"destination,omitempty" yaml:"destination,omitempty"`
 
 	archive Archive
 }
@@ -40,14 +40,14 @@ func (f *ReleaseFile) Download(ctx context.Context, path string, m *Manifest) er
 		}
 	}
 
-	resp, err := m.Repo.FetchReleaseFile(ctx, m.Version.Get(), f.Filename)
+	resp, err := m.Repo.FetchReleaseFile(ctx, m.Version.Get(), f.Name)
 	if err != nil {
 		return err
 	}
 	defer resp.Body.Close()
 
 	f.archive = NewArchive(
-		fmt.Sprintf("%s-%s-%s", m.Repo.Name(), m.Version.Get().String(), f.Filename),
+		fmt.Sprintf("%s-%s-%s", m.Repo.Name(), m.Version.Get().String(), f.Name),
 		cleanpath,
 	)
 	out, err := os.Create(f.archive.Location())
