@@ -8,25 +8,39 @@ import (
 )
 
 func main() {
-	path := "./tmp/archive"
+	//path := "./tmp/archive"
 	ctx := context.Background()
 	repo := swizzle.Repo("afloesch/megamod")
-	mod, err := repo.FetchManifest(ctx, swizzle.SemVer("v0.1.1"))
+	ver := swizzle.SemVer("v0.1.1")
+	mod, err := repo.FetchManifest(ctx, ver)
 	if err != nil {
-		fmt.Println(fmt.Errorf("parse error: %s", err))
+		fmt.Println(err)
 		return
 	}
 
 	fmt.Println("mod:", mod)
 
-	if len(mod.Files) > 0 {
+	/*if len(mod.Files) > 0 {
 		fmt.Println("downloading mod:", mod.Name)
 		err = mod.DownloadReleaseFiles(ctx, path)
 		if err != nil {
-			fmt.Println(fmt.Errorf("fetch error: %s", err))
+			fmt.Println(err)
 			return
 		}
 	}
-
 	fmt.Println("mod files downloaded to ./tmp")
+	*/
+
+	err = mod.AddDependency(ctx, swizzle.Repo("afloesch/sse-skse"), swizzle.SemVer("v2.0.20"))
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	fmt.Println("Mod deps", mod.Dependency)
+	err = mod.WriteFile("./test.yml")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 }

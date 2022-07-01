@@ -12,17 +12,16 @@ import (
 
 /*
 Repo is a GitHub repository name which hosts swizzle mod
-releases. For example, afloesch/megamod is the name for
-this project's repository.
+releases.
 
 Example:
-	// create a repo from name
+	// get a swizzle repo by name
 	r := repo("afloesch/megamod")
 
-	// fetch manifest for v1.0.0
+	// fetch swiz.zle file for v1.0.0
 	m, err := r.FetchManifest(context.Background(), "v1.0.0")
 	if err != nil {
-		fmt.Errorf("missing release version", err)
+		fmt.Errorf("missing release version: %s", err)
 	}
 */
 type Repo string
@@ -56,7 +55,7 @@ func (r Repo) FetchManifest(ctx context.Context, version SemVer) (*Manifest, err
 
 	data, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("invalid manifest: %s", err)
 	}
 
 	mani, err := ParseManifest(data)
@@ -82,6 +81,14 @@ func (r Repo) FetchReleaseFile(ctx context.Context, version *Version, file strin
 			version.String(),
 			file,
 		))
+
+	if res.StatusCode() == 404 {
+		return nil, fmt.Errorf("file %s not found for %s", file, version.String())
+	}
+
+	if res.StatusCode() == 400 {
+		return nil, fmt.Errorf("invalid repo name or version: %s", err)
+	}
 
 	return res.RawResponse, err
 }
