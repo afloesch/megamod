@@ -90,7 +90,7 @@ func (s SemVer) String() string {
 func (v SemVer) Get() *Version {
 	parts := re.FindStringSubmatch(v.String())
 	if len(parts) != 6 {
-		return nil
+		return &Version{}
 	}
 
 	maj, _ := strconv.Atoi(parts[2])
