@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+
+	"github.com/google/go-github/v45/github"
 )
 
 // ReleaseFile is an archived file for a mod release, hosted on GitHub releases.
@@ -16,11 +18,12 @@ type ReleaseFile struct {
 	// root of the archive.
 	Source string `json:"source,omitempty" yaml:"source,omitempty"`
 
-	// Dest is the folder path, relative to the game directory, where the mod content
-	// should be installed. Default is to the root of the game directory.
+	// Destination is the folder path, relative to the game directory, where the
+	// mod content should be installed. Default is to the root of the game directory.
 	Destination string `json:"destination,omitempty" yaml:"destination,omitempty"`
 
-	archive Archive
+	archive      Archive
+	releaseAsset *github.ReleaseAsset
 }
 
 // Download fetches and writes the release file to system at the given folder path.
@@ -32,6 +35,10 @@ func (f *ReleaseFile) Download(ctx context.Context, path string, m *Manifest) er
 		return fmt.Errorf("nil manifest")
 	}
 
+	if f.releaseAsset == nil {
+		return fmt.Errorf("nil release archive")
+	}
+
 	cleanpath := filepath.Clean(path)
 	if _, err := os.Stat(cleanpath); err != nil {
 		err = os.MkdirAll(cleanpath, 0755)
@@ -40,7 +47,7 @@ func (f *ReleaseFile) Download(ctx context.Context, path string, m *Manifest) er
 		}
 	}
 
-	resp, err := m.Repo.FetchReleaseFile(ctx, m.Version.Get(), f.Name)
+	resp, err := m.Repo.FetchReleaseFile(ctx, f.releaseAsset)
 	if err != nil {
 		return err
 	}

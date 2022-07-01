@@ -47,23 +47,25 @@ func (r Repo) String() string {
 	return string(r)
 }
 
-func (r Repo) LatestRelease(ctx context.Context) (*github.RepositoryRelease, error) {
-	client := github.NewClient(http.DefaultClient)
-	rel, res, err := client.Repositories.GetLatestRelease(ctx, r.Organization(), r.Name())
-	if err != nil {
-		return nil, fmt.Errorf("invalid repo: %s", err)
-	}
-
-	if res.StatusCode > 299 {
-		return nil, fmt.Errorf("invalid repo")
-	}
-
-	return rel, nil
-}
-
 // FetchManifest fetches a release swizzle Manifest.
 func (r Repo) FetchManifest(ctx context.Context, version SemVer) (*Manifest, error) {
-	resp, err := r.FetchReleaseFile(ctx, version.Get(), manifestName)
+	rel, err := r.FetchRelease(ctx, version.Get())
+	if err != nil {
+		return nil, err
+	}
+
+	if rel == nil {
+		return nil, fmt.Errorf("fail")
+	}
+
+	var asset *github.ReleaseAsset
+	for _, a := range rel.Assets {
+		if a.GetName() == manifestName {
+			asset = a
+		}
+	}
+
+	resp, err := r.FetchReleaseFile(ctx, asset)
 	if err != nil {
 		return nil, err
 	}
@@ -79,9 +81,48 @@ func (r Repo) FetchManifest(ctx context.Context, version SemVer) (*Manifest, err
 		return nil, err
 	}
 
+	for _, f := range mani.Files {
+		for _, a := range rel.Assets {
+			if a.GetName() == f.Name {
+				f.releaseAsset = a
+			}
+		}
+	}
+
+	mani.release = rel
 	mani.Repo = r
 	mani.Version = version
 	return mani, nil
+}
+
+func (r Repo) FetchRelease(ctx context.Context, version *Version) (*github.RepositoryRelease, error) {
+	rel, err := r.Releases(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("invalid repo: %s", err)
+	}
+
+	for _, d := range rel {
+		if d.GetTagName() == version.String() {
+			return d, nil
+		}
+	}
+
+	return nil, fmt.Errorf("no release for version '%s'", version.String())
+}
+
+func (r Repo) LatestRelease(ctx context.Context) (*github.RepositoryRelease, error) {
+	client := github.NewClient(http.DefaultClient)
+	rel, res, err := client.Repositories.GetLatestRelease(ctx, r.Organization(), r.Name())
+	if err != nil {
+		return nil, fmt.Errorf("invalid repo: %s", err)
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode > 299 {
+		return nil, fmt.Errorf("invalid repo")
+	}
+
+	return rel, nil
 }
 
 func (r Repo) Releases(ctx context.Context) ([]*github.RepositoryRelease, error) {
@@ -100,43 +141,19 @@ func (r Repo) Releases(ctx context.Context) ([]*github.RepositoryRelease, error)
 }
 
 // FetchReleaseFile makes a request for a release file for a particular version.
-func (r Repo) FetchReleaseFile(ctx context.Context, version *Version, file string) (*http.Response, error) {
-	var release *github.RepositoryRelease
-	var asset *github.ReleaseAsset
-
-	rel, err := r.Releases(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("invalid repo: %s", err)
-	}
-
-	for _, d := range rel {
-		if d.GetTagName() == version.String() {
-			release = d
-		}
-	}
-
-	if release == nil {
-		return nil, fmt.Errorf("no release for version '%s'", version.String())
-	}
-
-	for _, d := range release.Assets {
-		if d.GetName() == file {
-			asset = d
-		}
-	}
+func (r Repo) FetchReleaseFile(ctx context.Context, asset *github.ReleaseAsset) (*http.Response, error) {
 
 	if asset == nil {
-		return nil, fmt.Errorf("release file '%s' not found for version '%s'", file, version.String())
+		return nil, fmt.Errorf("release file '%s' not found", asset.GetBrowserDownloadURL())
 	}
 
-	url := asset.BrowserDownloadURL
 	res, err := resty.New().R().
 		SetDoNotParseResponse(true).
 		SetContext(ctx).
-		Get(*url)
+		Get(asset.GetBrowserDownloadURL())
 
 	if res.StatusCode() == 404 {
-		return nil, fmt.Errorf("release file '%s' not found for version '%s'", file, version.String())
+		return nil, fmt.Errorf("release file '%s' not found", asset.GetBrowserDownloadURL())
 	}
 
 	return res.RawResponse, err

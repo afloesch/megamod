@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"regexp"
 	"strconv"
+	"strings"
 )
 
 const versionGTE versionOperator = ">="
@@ -14,14 +15,22 @@ var re *regexp.Regexp = regexp.MustCompile(`^([>|<]?=?)(?:v)([\d]+).([\d]+).([\d
 type versionOperator string
 
 /*
-SemVer is a semantic version string with additional support for >= or
-<= comparison operations. For example, >=v1.0.1.
+SemVer is a semantic version string with additional support for
+greater than or equal to ">=", or less than or equal to "<="
+comparison operations. For example:
 
-A SemVer string can be parsed to a Version for value parsing or comparisons.
+>=v1.3.1
 
-Example:
+<=v3.0.0
 
-	ver := swizzle.SemVer("v1.0.0").Get()
+v1.0.2
+
+v0.0.1-alpha
+
+A SemVer string can be parsed to a Version for value parsing or
+comparisons. Example:
+
+	version := swizzle.SemVer("v1.0.0").Get()
 */
 type SemVer string
 
@@ -37,8 +46,15 @@ type Version struct {
 	Build    string          `json:"build,omitempty" yaml:"build,omitempty"`
 }
 
+// String returns the Version in semantic version string format.
 func (v *Version) String() string {
-	return fmt.Sprintf("v%v.%v.%v", v.Major, v.Minor, v.Patch)
+	var s strings.Builder
+	s.WriteString(fmt.Sprintf("v%v.%v.%v", v.Major, v.Minor, v.Patch))
+	if v.Build != "" {
+		s.WriteString("-")
+		s.WriteString(v.Build)
+	}
+	return s.String()
 }
 
 /*
@@ -94,6 +110,7 @@ func (v *Version) Compare(d *Version) int {
 	return 0
 }
 
+// String returns the SemVer string value.
 func (s SemVer) String() string {
 	return string(s)
 }

@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/google/go-github/v45/github"
 	"gopkg.in/yaml.v3"
 )
 
@@ -27,7 +28,9 @@ type Game struct {
 	Version SemVer `json:"version,omitempty" yaml:"version,omitempty"`
 }
 
-// Manifest defines the swiz.zle file format for a mod release.
+// Manifest defines the swiz.zle file format for a mod release. All mods released
+// for swizzle host mod releases publicly on GitHub, and include the release swiz.zle
+// file in the GitHub release assets.
 type Manifest struct {
 	// AgeRating is a swizzle supported rating system value for content
 	// age ratings. An unspecified age rating is assumed safe for all ages.
@@ -40,7 +43,7 @@ type Manifest struct {
 	Description string `json:"description,omitempty" yaml:"description,omitempty"`
 
 	// All bundled release assets for the mod release. Release files are optional.
-	Files []ReleaseFile `json:"files,omitempty" yaml:"files,omitempty"`
+	Files []*ReleaseFile `json:"files,omitempty" yaml:"files,omitempty"`
 
 	// Game is the supported game and game version for the mod release. All Game values
 	// are optional but must be provided to enforce game version compatibility checks
@@ -62,6 +65,8 @@ type Manifest struct {
 
 	// Mod version. Must use semantic versioning.
 	Version SemVer `json:"version,omitempty" yaml:"version,omitempty"`
+
+	release *github.RepositoryRelease
 }
 
 // New creates an empty swizzle manifest.
