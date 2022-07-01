@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/go-resty/resty/v2"
+	"github.com/google/go-github/v45/github"
 )
 
 /*
@@ -45,6 +46,20 @@ func (r Repo) String() string {
 	return string(r)
 }
 
+func (r Repo) LatestRelease(ctx context.Context) (*github.RepositoryRelease, error) {
+	client := github.NewClient(http.DefaultClient)
+	rel, res, err := client.Repositories.GetLatestRelease(ctx, r.Organization(), r.Name())
+	if err != nil {
+		return nil, fmt.Errorf("invalid repo: %s", err)
+	}
+
+	if res.StatusCode > 299 {
+		return nil, fmt.Errorf("invalid repo")
+	}
+
+	return rel, nil
+}
+
 // FetchManifest fetches a release swizzle Manifest.
 func (r Repo) FetchManifest(ctx context.Context, version SemVer) (*Manifest, error) {
 	resp, err := r.FetchReleaseFile(ctx, version.Get(), manifestName)
@@ -68,26 +83,59 @@ func (r Repo) FetchManifest(ctx context.Context, version SemVer) (*Manifest, err
 	return mani, nil
 }
 
-// FetchReleaseFile makes a request for a release file for a particular version.
-func (r Repo) FetchReleaseFile(ctx context.Context, version *Version, file string) (*http.Response, error) {
-	res, err := resty.
-		New().
-		R().
-		SetDoNotParseResponse(true).
-		SetContext(ctx).
-		Get(fmt.Sprintf(
-			"https://github.com/%s/releases/download/%s/%s",
-			r.String(),
-			version.String(),
-			file,
-		))
+func (r Repo) Releases(ctx context.Context) ([]*github.RepositoryRelease, error) {
+	client := github.NewClient(http.DefaultClient)
+	rel, res, err := client.Repositories.ListReleases(ctx, r.Organization(), r.Name(), nil)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Body.Close()
 
-	if res.StatusCode() == 404 {
-		return nil, fmt.Errorf("file %s not found for %s", file, version.String())
+	if res.StatusCode > 299 {
+		return nil, fmt.Errorf("invalid repo")
 	}
 
-	if res.StatusCode() == 400 {
-		return nil, fmt.Errorf("invalid repo name or version: %s", err)
+	return rel, nil
+}
+
+// FetchReleaseFile makes a request for a release file for a particular version.
+func (r Repo) FetchReleaseFile(ctx context.Context, version *Version, file string) (*http.Response, error) {
+	var release *github.RepositoryRelease
+	var asset *github.ReleaseAsset
+
+	rel, err := r.Releases(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("invalid repo: %s", err)
+	}
+
+	for _, d := range rel {
+		if d.GetTagName() == version.String() {
+			release = d
+		}
+	}
+
+	if release == nil {
+		return nil, fmt.Errorf("release not found for %s", version.String())
+	}
+
+	for _, d := range release.Assets {
+		if d.GetName() == file {
+			asset = d
+		}
+	}
+
+	if asset == nil {
+		return nil, fmt.Errorf("release file %s not found for %s", file, version.String())
+	}
+
+	url := asset.BrowserDownloadURL
+	res, err := resty.New().R().
+		SetDoNotParseResponse(true).
+		SetContext(ctx).
+		Get(*url)
+
+	if res.StatusCode() == 404 {
+		return nil, fmt.Errorf("release file %s not found for %s", file, version.String())
 	}
 
 	return res.RawResponse, err

@@ -13,7 +13,7 @@ type ReleaseFile struct {
 	Source   string `json:"source,omitempty" yaml:"source,omitempty"`
 	Dest     string `json:"destination,omitempty" yaml:"destination,omitempty"`
 
-	archive Archive `json:"archive,omitempty" yaml:"archive,omitempty"`
+	archive Archive
 }
 
 // Download fetches and writes the release file to system at the given folder path.
