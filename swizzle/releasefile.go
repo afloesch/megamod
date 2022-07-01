@@ -9,14 +9,24 @@ import (
 
 // ReleaseFile is an archived file for a mod release, hosted on GitHub releases.
 type ReleaseFile struct {
+	// Release file name.
 	Filename string `json:"filename,omitempty" yaml:"filename,omitempty"`
-	Source   string `json:"source,omitempty" yaml:"source,omitempty"`
-	Dest     string `json:"destination,omitempty" yaml:"destination,omitempty"`
+
+	// Source is the path to mod content inside the release archive. Default is to the
+	// root of the archive.
+	Source string `json:"source,omitempty" yaml:"source,omitempty"`
+
+	// Dest is the folder path, relative to the game directory, where the mod content
+	// should be installed. Default is to the root of the game directory.
+	Dest string `json:"destination,omitempty" yaml:"destination,omitempty"`
 
 	archive Archive
 }
 
 // Download fetches and writes the release file to system at the given folder path.
+//
+// Downloaded file names are appended with the repo name and the release version to
+// prevent naming conflicts with other releases.
 func (f *ReleaseFile) Download(ctx context.Context, path string, m *Manifest) error {
 	if m == nil {
 		return fmt.Errorf("nil manifest")

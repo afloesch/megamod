@@ -19,10 +19,10 @@ Example:
 	// get a swizzle repo by name
 	r := repo("afloesch/megamod")
 
-	// fetch swiz.zle file for v1.0.0
-	m, err := r.FetchManifest(context.Background(), "v1.0.0")
+	// fetch swiz.zle manifest file for v1.0.0
+	m, err := r.FetchManifest(context.TODO, swizzle.SemVer("v1.0.0"))
 	if err != nil {
-		fmt.Errorf("missing release version: %s", err)
+		fmt.Printf("missing release version: %s", err)
 	}
 */
 type Repo string

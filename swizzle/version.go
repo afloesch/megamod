@@ -13,10 +13,22 @@ var re *regexp.Regexp = regexp.MustCompile(`^([>|<]?=?)(?:v)([\d]+).([\d]+).([\d
 
 type versionOperator string
 
+/*
+SemVer is a semantic version string with additional support for >= or
+<= comparison operations. For example, >=v1.0.1.
+
+A SemVer string can be parsed to a Version for value parsing or comparisons.
+
+Example:
+
+	ver := swizzle.SemVer("v1.0.0").Get()
+*/
 type SemVer string
 
-// Version is a semantic version augmented with a VersionOperator
-// for finer grained versioning rules.
+/*
+Version is a semantic version augmented with a VersionOperator
+for finer grained versioning rules.
+*/
 type Version struct {
 	Operator versionOperator `json:"operator,omitempty" yaml:"operator,omitempty"`
 	Major    int             `json:"major" yaml:"major"`
@@ -86,7 +98,7 @@ func (s SemVer) String() string {
 	return string(s)
 }
 
-// Version parses a semantic version string to a Version object.
+// Get returns a Version from the SemVer string.
 func (v SemVer) Get() *Version {
 	parts := re.FindStringSubmatch(v.String())
 	if len(parts) != 6 {

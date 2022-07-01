@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -20,17 +21,43 @@ type Game struct {
 
 // Manifest defines the swiz.zle file format for a mod release.
 type Manifest struct {
-	AgeRating   AgeRating       `json:"ages,omitempty" yaml:"ages,omitempty"`
-	Dependency  map[Repo]SemVer `json:"dependency,omitempty" yaml:"dependency,omitempty"`
-	Description string          `json:"description,omitempty" yaml:"description,omitempty"`
-	Files       []ReleaseFile   `json:"files,omitempty" yaml:"files,omitempty"`
-	Game        Game            `json:"game,omitempty" yaml:"game,omitempty"`
-	License     string          `json:"license,omitempty" yaml:"license,omitempty"`
-	Name        string          `json:"name,omitempty" yaml:"name,omitempty"`
-	Repo        Repo            `json:"repo,omitempty" yaml:"repo,omitempty"`
-	Version     SemVer          `json:"version,omitempty" yaml:"version,omitempty"`
+	// AgeRating is a swizzle supported rating system value for content
+	// age ratings. An unspecified age rating is assumed safe for all ages.
+	AgeRating AgeRating `json:"ages,omitempty" yaml:"ages,omitempty"`
+
+	// Dependency is the optional list of dependent mods for the swizzle manifest.
+	Dependency map[Repo]SemVer `json:"dependency,omitempty" yaml:"dependency,omitempty"`
+
+	// An optional short description for the mod.
+	Description string `json:"description,omitempty" yaml:"description,omitempty"`
+
+	// All bundled release assets for the mod release. Release files are optional.
+	Files []ReleaseFile `json:"files,omitempty" yaml:"files,omitempty"`
+
+	// Game is the supported game and game version for the mod release. All Game values
+	// are optional but must be provided to enforce game version compatibility checks
+	// between mods, so it can be considered best practice to provide this information.
+	//
+	// See the Game struct for more information.
+	Game Game `json:"game,omitempty" yaml:"game,omitempty"`
+
+	// License is an optional content license for the mod.
+	License string `json:"license,omitempty" yaml:"license,omitempty"`
+
+	// Name is optional. Swizzle will default to the repo name if the name
+	// field is not set.
+	Name string `json:"name,omitempty" yaml:"name,omitempty"`
+
+	// The GitHub repository for the mod release. See the swizzle Repo docs
+	// for more information.
+	Repo Repo `json:"repo,omitempty" yaml:"repo,omitempty"`
+
+	// Mod version. Must use semantic versioning.
+	Version SemVer `json:"version,omitempty" yaml:"version,omitempty"`
 }
 
+// AddDependency gets the specified release manifest and adds it and all dependencies
+// to the manifest.
 func (m *Manifest) AddDependency(ctx context.Context, repo Repo, version SemVer) error {
 	dep, err := repo.FetchManifest(ctx, version)
 	if err != nil {
@@ -49,16 +76,17 @@ func (m *Manifest) AddDependency(ctx context.Context, repo Repo, version SemVer)
 }
 
 func (m *Manifest) addDependency(repo Repo, version SemVer) error {
+
+	if m.Dependency == nil {
+		m.Dependency = map[Repo]SemVer{}
+	}
+
 	/*var exists bool
 	for k := range m.Dependency {
 		if k == repo {
 			exists = true
 		}
 	}*/
-
-	if m.Dependency == nil {
-		m.Dependency = map[Repo]SemVer{}
-	}
 
 	// temp logic
 	m.Dependency[repo] = version
@@ -86,7 +114,7 @@ func (m *Manifest) DownloadReleaseFiles(ctx context.Context, path string) error 
 	return m.WriteFile(fpath)
 }
 
-// WriteFile adds the manifest file to the system at the given path.
+// WriteFile adds the manifest file to the file system at the given path.
 func (m *Manifest) WriteFile(path string) error {
 	content, err := yaml.Marshal(m)
 	if err != nil {
@@ -95,6 +123,18 @@ func (m *Manifest) WriteFile(path string) error {
 
 	fpath := filepath.Clean(path)
 	return os.WriteFile(fpath, content, 0644)
+}
+
+// ReadFile parses a manifest file from the file system at the given path.
+func (m *Manifest) ReadFile(path string) error {
+	b, err := ioutil.ReadFile(filepath.Clean(path))
+	if err != nil {
+		return err
+	}
+
+	parsed, err := ParseManifest(b)
+	*m = *parsed
+	return err
 }
 
 /*

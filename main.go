@@ -42,4 +42,14 @@ func main() {
 		fmt.Println(err)
 		return
 	}
+
+	newmod := swizzle.Manifest{}
+	err = newmod.ReadFile("./swiz.zle")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	fmt.Println("mod:", newmod)
+
 }
