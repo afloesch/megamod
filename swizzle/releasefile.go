@@ -26,6 +26,7 @@ type ReleaseFile struct {
 	asset   *github.ReleaseAsset
 }
 
+// setReleaseAssset matches a ReleaseFile with the set of github release assets.
 func (f *ReleaseFile) setReleaseAsset(assets []*github.ReleaseAsset) {
 	for _, a := range assets {
 		if a.GetName() == f.Name {

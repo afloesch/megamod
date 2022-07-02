@@ -144,7 +144,7 @@ func (r Repo) Releases(ctx context.Context) ([]*github.RepositoryRelease, error)
 	return rel, nil
 }
 
-// FetchReleaseFile makes a request for a release file for a particular version.
+// ReleaseFile fetches a release asset and returns the http.Response from the request.
 func (r Repo) ReleaseFile(ctx context.Context, asset *github.ReleaseAsset) (*http.Response, error) {
 	if asset == nil {
 		return nil, fmt.Errorf("nil asset")
