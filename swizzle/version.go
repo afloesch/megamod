@@ -66,11 +66,11 @@ func (v *Version) String() string {
 }
 
 /*
-OpCompare tests the Version Operator against the passed version (d) and
-returns true if d passes the operator rule.
+OpCompare tests any current Version operator against the passed version and
+returns false if the passed version violates the operator rule.
 */
-func (v *Version) OpCompare(d *Version) bool {
-	i := v.Compare(d)
+func (v *Version) OpCompare(version *Version) bool {
+	i := v.Compare(version)
 
 	switch v.Operator {
 	case versionGTE:
@@ -83,35 +83,36 @@ func (v *Version) OpCompare(d *Version) bool {
 }
 
 /*
-Compare checks the two versions and returns 1 if v is greater than d, -1 if
-v is less than d, and 0 if they are equal.
+Compare checks the two versions and returns 1 if current Version is greater than
+the passed version, -1 if the current Version is less than the passed version,
+and 0 if they are equal.
 */
-func (v *Version) Compare(d *Version) int {
-	if v.Major > d.Major {
+func (v *Version) Compare(version *Version) int {
+	if v.Major > version.Major {
 		return 1
 	}
 
-	if v.Major < d.Major {
+	if v.Major < version.Major {
 		return -1
 	}
 
-	if v.Minor > d.Minor {
+	if v.Minor > version.Minor {
 		return 1
 	}
 
-	if v.Minor < d.Minor {
+	if v.Minor < version.Minor {
 		return -1
 	}
 
-	if v.Patch > d.Patch {
+	if v.Patch > version.Patch {
 		return 1
 	}
 
-	if v.Patch < d.Patch {
+	if v.Patch < version.Patch {
 		return -1
 	}
 
-	if v.Build != d.Build {
+	if v.Build != version.Build {
 		return 1
 	}
 
