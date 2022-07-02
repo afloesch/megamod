@@ -16,7 +16,7 @@ const manifestName string = "swiz.zle"
 
 // Game is the supported game and game version for a mod release. Specifying
 // the game values are optional, but encouraged to enable version and game
-// compatibility checks between mod dependencies.
+// compatibility checks between mods.
 type Game struct {
 	// Executable is the supported game executable file name, including the
 	// file extension.
@@ -66,7 +66,8 @@ type Manifest struct {
 	// Mod version. Must use semantic versioning.
 	Version SemVer `json:"version,omitempty" yaml:"version,omitempty"`
 
-	release *github.RepositoryRelease
+	release      *github.RepositoryRelease
+	releaseAsset *github.ReleaseAsset
 }
 
 // New creates an empty swizzle manifest.
@@ -96,38 +97,56 @@ func (m *Manifest) SetVersion(version string) *Manifest {
 
 // AddDependency gets the specified release manifest and adds it and all dependencies
 // to the manifest.
-func (m *Manifest) AddDependency(ctx context.Context, repo Repo, version SemVer) error {
-	dep, err := repo.FetchManifest(ctx, version)
+func (m *Manifest) AddDependency(ctx context.Context, repo string, version string) error {
+	r := Repo(repo)
+	v := SemVer(version).Get()
+	rel, err := r.Release(ctx, version)
+	if err != nil {
+		return err
+	}
+
+	dep, err := r.Manifest(ctx, rel)
 	if err != nil {
 		return err
 	}
 
 	for k := range dep.Dependency {
 		subVer := dep.Dependency[k]
-		err = m.addDependency(k, subVer)
+		err = m.addDependency(k, subVer.Get())
 		if err != nil {
 			return err
 		}
 	}
 
-	return m.addDependency(repo, version)
+	return m.addDependency(r, v)
 }
 
-func (m *Manifest) addDependency(repo Repo, version SemVer) error {
-
+func (m *Manifest) addDependency(repo Repo, version *Version) error {
 	if m.Dependency == nil {
 		m.Dependency = map[Repo]SemVer{}
 	}
 
-	/*var exists bool
+	var exists bool
 	for k := range m.Dependency {
 		if k == repo {
 			exists = true
+			currVer := m.Dependency[repo].Get()
+			if ok := currVer.OpCompare(version); ok {
+				m.Dependency[repo] = SemVer(version.SemVer())
+			} else {
+				return fmt.Errorf(
+					"'%s' version '%s' is incompatible with '%s'",
+					repo.String(),
+					currVer.SemVer().String(),
+					version.SemVer().String(),
+				)
+			}
 		}
-	}*/
+	}
 
-	// temp logic
-	m.Dependency[repo] = version
+	if !exists {
+		m.Dependency[repo] = SemVer(version.SemVer())
+	}
 
 	return nil
 }
@@ -136,7 +155,7 @@ func (m *Manifest) addDependency(repo Repo, version SemVer) error {
 // at the given folder path.
 func (m *Manifest) DownloadReleaseFiles(ctx context.Context, path string) error {
 	for _, f := range m.Files {
-		err := f.Download(ctx, path, m)
+		err := f.download(ctx, path, m)
 		if err != nil {
 			return err
 		}
@@ -177,7 +196,7 @@ func (m *Manifest) ReadFile(path string) (*Manifest, error) {
 
 /*
 ParseManifest unmarshals data to a swizzle manifest. Swizzle manifest
-files are either JSON or YAML, and must be named `swiz.zle`.
+files are either JSON or YAML, and must be named "swiz.zle".
 */
 func ParseManifest(data []byte) (*Manifest, error) {
 	manifest, ymlErr := parseYAMLManifest(data)

@@ -20,7 +20,7 @@ Example:
 	r := repo("afloesch/megamod")
 
 	// fetch swiz.zle manifest file for v1.0.0
-	m, err := r.FetchManifest(context.TODO, swizzle.SemVer("v1.0.0"))
+	m, err := r.Manifest(context.TODO, swizzle.SemVer("v1.0.0"))
 	if err != nil {
 		fmt.Printf("missing release version: %s", err)
 	}
@@ -47,25 +47,24 @@ func (r Repo) String() string {
 	return string(r)
 }
 
-// FetchManifest fetches a release swizzle Manifest.
-func (r Repo) FetchManifest(ctx context.Context, version SemVer) (*Manifest, error) {
-	rel, err := r.FetchRelease(ctx, version.Get())
-	if err != nil {
-		return nil, err
-	}
-
-	if rel == nil {
-		return nil, fmt.Errorf("fail")
+// Manifest fetches a swizzle Manifest from a release.
+func (r Repo) Manifest(ctx context.Context, release *github.RepositoryRelease) (*Manifest, error) {
+	if release == nil {
+		return nil, fmt.Errorf("nil release")
 	}
 
 	var asset *github.ReleaseAsset
-	for _, a := range rel.Assets {
+	for _, a := range release.Assets {
 		if a.GetName() == manifestName {
 			asset = a
 		}
 	}
 
-	resp, err := r.FetchReleaseFile(ctx, asset)
+	if asset == nil {
+		return nil, fmt.Errorf("manifest not found")
+	}
+
+	resp, err := r.ReleaseFile(ctx, asset)
 	if err != nil {
 		return nil, err
 	}
@@ -73,7 +72,7 @@ func (r Repo) FetchManifest(ctx context.Context, version SemVer) (*Manifest, err
 
 	data, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("invalid manifest: %s", err)
+		return nil, fmt.Errorf("invalid manifest file data: %s", err)
 	}
 
 	mani, err := ParseManifest(data)
@@ -82,34 +81,35 @@ func (r Repo) FetchManifest(ctx context.Context, version SemVer) (*Manifest, err
 	}
 
 	for _, f := range mani.Files {
-		for _, a := range rel.Assets {
-			if a.GetName() == f.Name {
-				f.releaseAsset = a
-			}
-		}
+		f.setReleaseAsset(release.Assets)
 	}
 
-	mani.release = rel
+	mani.release = release
+	mani.releaseAsset = asset
 	mani.Repo = r
-	mani.Version = version
+	mani.Version = SemVer(release.GetTagName())
 	return mani, nil
 }
 
-func (r Repo) FetchRelease(ctx context.Context, version *Version) (*github.RepositoryRelease, error) {
+// Release fetches a repository release.
+func (r Repo) Release(ctx context.Context, version string) (*github.RepositoryRelease, error) {
+	ver := SemVer(version).Get()
+
 	rel, err := r.Releases(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("invalid repo: %s", err)
 	}
 
 	for _, d := range rel {
-		if d.GetTagName() == version.String() {
+		if d.GetTagName() == ver.String() {
 			return d, nil
 		}
 	}
 
-	return nil, fmt.Errorf("no release for version '%s'", version.String())
+	return nil, fmt.Errorf("no release for version '%s'", version)
 }
 
+// LatestRelease fetches the latest release for a repository.
 func (r Repo) LatestRelease(ctx context.Context) (*github.RepositoryRelease, error) {
 	client := github.NewClient(http.DefaultClient)
 	rel, res, err := client.Repositories.GetLatestRelease(ctx, r.Organization(), r.Name())
@@ -125,6 +125,7 @@ func (r Repo) LatestRelease(ctx context.Context) (*github.RepositoryRelease, err
 	return rel, nil
 }
 
+// Releases fetches a list of releases from a repository.
 func (r Repo) Releases(ctx context.Context) ([]*github.RepositoryRelease, error) {
 	client := github.NewClient(http.DefaultClient)
 	rel, res, err := client.Repositories.ListReleases(ctx, r.Organization(), r.Name(), nil)
@@ -141,10 +142,9 @@ func (r Repo) Releases(ctx context.Context) ([]*github.RepositoryRelease, error)
 }
 
 // FetchReleaseFile makes a request for a release file for a particular version.
-func (r Repo) FetchReleaseFile(ctx context.Context, asset *github.ReleaseAsset) (*http.Response, error) {
-
+func (r Repo) ReleaseFile(ctx context.Context, asset *github.ReleaseAsset) (*http.Response, error) {
 	if asset == nil {
-		return nil, fmt.Errorf("release file '%s' not found", asset.GetBrowserDownloadURL())
+		return nil, fmt.Errorf("nil asset")
 	}
 
 	res, err := resty.New().R().

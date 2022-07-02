@@ -11,8 +11,13 @@ func main() {
 	path := "./tmp/archive"
 	ctx := context.Background()
 	repo := swizzle.Repo("afloesch/megamod")
-	ver := swizzle.SemVer("v0.1.1")
-	mod, err := repo.FetchManifest(ctx, ver)
+	rel, err := repo.Release(ctx, "v0.1.1")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	mod, err := repo.Manifest(ctx, rel)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -30,7 +35,7 @@ func main() {
 	}
 	fmt.Println("mod files downloaded to ./tmp")
 
-	err = mod.AddDependency(ctx, swizzle.Repo("afloesch/sse-skse"), swizzle.SemVer("v2.0.20"))
+	err = mod.AddDependency(ctx, "afloesch/sse-skse", ">=v2.0.20")
 	if err != nil {
 		fmt.Println(err)
 		return

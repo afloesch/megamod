@@ -22,20 +22,28 @@ type ReleaseFile struct {
 	// mod content should be installed. Default is to the root of the game directory.
 	Destination string `json:"destination,omitempty" yaml:"destination,omitempty"`
 
-	archive      Archive
-	releaseAsset *github.ReleaseAsset
+	archive Archive
+	asset   *github.ReleaseAsset
 }
 
-// Download fetches and writes the release file to system at the given folder path.
+func (f *ReleaseFile) setReleaseAsset(assets []*github.ReleaseAsset) {
+	for _, a := range assets {
+		if a.GetName() == f.Name {
+			f.asset = a
+		}
+	}
+}
+
+// download fetches and writes the release file to the system at the given folder path.
 //
 // Downloaded file names are appended with the repo name and the release version to
-// prevent naming conflicts with other releases.
-func (f *ReleaseFile) Download(ctx context.Context, path string, m *Manifest) error {
+// prevent naming conflicts with other release files.
+func (f *ReleaseFile) download(ctx context.Context, path string, m *Manifest) error {
 	if m == nil {
 		return fmt.Errorf("nil manifest")
 	}
 
-	if f.releaseAsset == nil {
+	if f.asset == nil {
 		return fmt.Errorf("nil release archive")
 	}
 
@@ -47,7 +55,7 @@ func (f *ReleaseFile) Download(ctx context.Context, path string, m *Manifest) er
 		}
 	}
 
-	resp, err := m.Repo.FetchReleaseFile(ctx, f.releaseAsset)
+	resp, err := m.Repo.ReleaseFile(ctx, f.asset)
 	if err != nil {
 		return err
 	}

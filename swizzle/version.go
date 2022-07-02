@@ -46,6 +46,14 @@ type Version struct {
 	Build    string          `json:"build,omitempty" yaml:"build,omitempty"`
 }
 
+// SemVer returns the SemVer value for the Version.
+func (v *Version) SemVer() SemVer {
+	var s strings.Builder
+	s.WriteString(string(v.Operator))
+	s.WriteString(v.String())
+	return SemVer(s.String())
+}
+
 // String returns the Version in semantic version string format.
 func (v *Version) String() string {
 	var s strings.Builder
