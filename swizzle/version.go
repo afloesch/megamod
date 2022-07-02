@@ -40,9 +40,9 @@ for finer grained versioning rules.
 */
 type Version struct {
 	Operator versionOperator `json:"operator,omitempty" yaml:"operator,omitempty"`
-	Major    int             `json:"major" yaml:"major"`
-	Minor    int             `json:"minor" yaml:"minor"`
-	Patch    int             `json:"patch" yaml:"patch"`
+	Major    uint16          `json:"major" yaml:"major"`
+	Minor    uint16          `json:"minor" yaml:"minor"`
+	Patch    uint16          `json:"patch" yaml:"patch"`
 	Build    string          `json:"build,omitempty" yaml:"build,omitempty"`
 }
 
@@ -130,14 +130,15 @@ func (v SemVer) Get() *Version {
 		return &Version{}
 	}
 
-	maj, _ := strconv.Atoi(parts[2])
-	min, _ := strconv.Atoi(parts[3])
-	patch, _ := strconv.Atoi(parts[4])
+	maj, _ := strconv.ParseInt(parts[2], 10, 16)
+	min, _ := strconv.ParseInt(parts[3], 10, 16)
+	patch, _ := strconv.ParseInt(parts[4], 10, 16)
+
 	return &Version{
 		Operator: versionOperator(parts[1]),
-		Major:    maj,
-		Minor:    min,
-		Patch:    patch,
+		Major:    uint16(maj),
+		Minor:    uint16(min),
+		Patch:    uint16(patch),
 		Build:    parts[5],
 	}
 }
