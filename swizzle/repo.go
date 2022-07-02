@@ -16,14 +16,17 @@ Repo is a GitHub repository name which hosts swizzle mod
 releases.
 
 Example:
-	// get a swizzle repo by name
+	// Create swizzle repo by name
 	r := repo("afloesch/megamod")
 
-	// fetch swiz.zle manifest file for v1.0.0
-	m, err := r.Manifest(context.TODO, swizzle.SemVer("v1.0.0"))
+	// Fetch release for v1.0.0
+	rel, err := r.Release(context.TODO, "v1.0.0")
 	if err != nil {
 		fmt.Printf("missing release version: %s", err)
 	}
+
+	// Get release manifest
+	manifest, _ := r.Manifest(context.TODO, rel)
 */
 type Repo string
 
