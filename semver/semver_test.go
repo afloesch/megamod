@@ -119,7 +119,7 @@ func TestOpCompare(t *testing.T) {
 			g.Assert(v.OpCompare(v2)).IsFalse()
 			g.Assert(v.OpCompare(v3)).IsTrue()
 		})
-		g.It("Should handle invalid comarison operator", func() {
+		g.It("Should handle invalid comparison operator", func() {
 			v := String("~~v1.0.0").Get()
 			v2 := String("v1.1.0").Get()
 			g.Assert(v.OpCompare(v2)).IsFalse()
@@ -312,6 +312,7 @@ func ExampleVersion_OpCompare_equal() {
 }
 
 func ExampleConfig() {
+	// Create a custom syntax for version comparison operators.
 	conf := Config(Operators{
 		GT:  Operator("+"),
 		GTE: Operator("+="),
@@ -325,7 +326,7 @@ func ExampleConfig() {
 }
 
 func ExampleConfig_gteorlte() {
-	// support only GTE or LTE comparisons.
+	// Support only GTE or LTE comparisons.
 	conf := Config(Operators{
 		GT:  Operator(">="),
 		GTE: Operator(">="),
@@ -339,7 +340,8 @@ func ExampleConfig_gteorlte() {
 }
 
 func ExampleConfig_gte() {
-	// support only GTE comparisons.
+	// Support only GTE comparisons with the ~ as the
+	// identifying character.
 	conf := Config(Operators{
 		GT:  Operator("~"),
 		GTE: Operator("~"),
@@ -348,6 +350,6 @@ func ExampleConfig_gte() {
 	}, `~`)
 
 	v := String("~v1.0.0").Get(conf)
-	fmt.Println(v.OpCompare(String("v1.1.0").Get()))
+	fmt.Println(v.OpCompare(String("v1.0.0").Get()))
 	// Output: true
 }
