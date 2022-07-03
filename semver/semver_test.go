@@ -223,7 +223,7 @@ func Example() {
 	// Output: 0
 }
 
-func Example_alt() {
+func Example_full() {
 	v := String("v3.14.15-beta").Get()
 
 	// Full support for https://semver.org specification.
@@ -254,7 +254,7 @@ func Example_marshal() {
 	// Output: 14
 }
 
-func Example_opcompare() {
+func Example_opCompare() {
 	v := String("v3.14.15").Get()
 	v2 := String("v3.14.16").Get()
 
@@ -278,7 +278,7 @@ func ExampleVersion() {
 	// Output: 3
 }
 
-func ExampleVersion_Compare_gt() {
+func ExampleVersion_Compare_gT() {
 	v := String("v2.0.0").Get()
 	v2 := String("v1.0.0").Get()
 
@@ -288,7 +288,7 @@ func ExampleVersion_Compare_gt() {
 	// Output: 1
 }
 
-func ExampleVersion_Compare_prerelease() {
+func ExampleVersion_Compare_preRelease() {
 	v := String("v1.0.0-rc").Get()
 	v2 := String("v1.0.0-alpha").Get()
 
@@ -336,7 +336,7 @@ func ExampleConfig() {
 	// Output: true
 }
 
-func ExampleConfig_gteorlte() {
+func ExampleConfig_gTEorLTE() {
 	// Support only GTE or LTE comparisons.
 	conf := Config(Operators{
 		GT:  Operator(">="),
@@ -350,7 +350,7 @@ func ExampleConfig_gteorlte() {
 	// Output: true
 }
 
-func ExampleConfig_gte() {
+func ExampleConfig_gTE() {
 	// Support only GTE comparisons with the ~ as the
 	// identifying character.
 	conf := Config(Operators{
