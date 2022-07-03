@@ -215,14 +215,20 @@ func TestComparePreRelease(t *testing.T) {
 
 func Example() {
 	v := String("v3.14.15").Get()
+
+	// The 'v' in a SemVer.String is optional.
 	v2 := String("3.14.15").Get()
+
 	fmt.Println(v.Compare(v2))
 	// Output: 0
 }
 
 func Example_alt() {
-	v := String("v3.14.15").Get()
-	v2 := String("1.0.0").Get()
+	v := String("v3.14.15-beta").Get()
+
+	// Full support for https://semver.org specification.
+	v2 := String("v3.14.15-alpha.1+test").Get()
+
 	fmt.Println(v.Compare(v2))
 	// Output: 1
 }
@@ -249,20 +255,25 @@ func Example_marshal() {
 }
 
 func Example_opcompare() {
-	v := String(">=v3.14.15").Get()
-	v2 := String("3.14.16").Get()
+	v := String("v3.14.15").Get()
+	v2 := String("v3.14.16").Get()
+
+	// Use OpCompare for a simple boolean result.
 	fmt.Println(v.OpCompare(v2))
-	// Output: true
+	// Output: false
 }
 
 func ExampleString_String() {
 	v := String(">=v3.14.15")
+
+	// String() returns the full string value.
 	fmt.Println(v.String())
 	// Output: >=v3.14.15
 }
 
 func ExampleVersion_String() {
 	v := String(">=v3.14.15").Get()
+
 	fmt.Println(v.String())
 	// Output: v3.14.15
 }
@@ -270,34 +281,40 @@ func ExampleVersion_String() {
 func ExampleVersion() {
 	s := String("v1.2.3")
 	v := s.Get()
+
 	fmt.Println(v.Patch)
 	// Output: 3
 }
 
 func ExampleVersion_Compare_gt() {
-	ver := String("v2.0.0").Get()
-	i := ver.Compare(String("v1.0.0").Get())
+	v := String("v2.0.0").Get()
+	v2 := String("v1.0.0").Get()
+
+	// Compare v to v2.
+	i := v.Compare(v2)
 	fmt.Println(i)
 	// Output: 1
 }
 
-func ExampleVersion_Compare_lt() {
-	ver := String("v1.0.0").Get()
-	i := ver.Compare(String("v2.0.0").Get())
+func ExampleVersion_Compare_prerelease() {
+	v := String("v1.0.0-rc").Get()
+	v2 := String("v1.0.0-alpha").Get()
+
+	i := v.Compare(v2)
 	fmt.Println(i)
-	// Output: -1
+	// Output: 1
 }
 
 func ExampleVersion_Compare_equal() {
-	ver := String("v1.0.0").Get()
-	i := ver.Compare(String("v1.0.0").Get())
+	v := String("v1.0.0").Get()
+	v2 := String("v1.0.0").Get()
+
+	i := v.Compare(v2)
 	fmt.Println(i)
 	// Output: 0
 }
 
 func ExampleVersion_OpCompare() {
-	// By dropping any operator in the version OpCompare
-	// will produce an equality check.
 	ver := String(">=v1.0.0").Get()
 	ok := ver.OpCompare(String("v1.0.0").Get())
 	fmt.Println(ok)
@@ -305,6 +322,8 @@ func ExampleVersion_OpCompare() {
 }
 
 func ExampleVersion_OpCompare_equal() {
+	// By dropping any operator in the version OpCompare
+	// will produce an equality check.
 	ver := String("v1.0.0").Get()
 	ok := ver.OpCompare(String("v1.0.0").Get())
 	fmt.Println(ok)
