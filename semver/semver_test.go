@@ -1,6 +1,7 @@
 package SemVer
 
 import (
+	"encoding/json"
 	"fmt"
 	"testing"
 
@@ -219,6 +220,27 @@ func Example_alt() {
 	v2 := String("1.0.0").Get()
 	fmt.Println(v.Compare(v2))
 	// Output: 1
+}
+
+func Example_marshal() {
+	// Because a SemVer.String is a just a string it can be
+	// marshaled and unmarshaled to other data formats
+	type Data struct {
+		Version String `json:"version"`
+	}
+
+	jsonData := []byte(`{
+		"version": ">=v3.14.15"
+	}`)
+
+	var data Data
+	err := json.Unmarshal(jsonData, &data)
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println(data.Version.Get().Minor)
+	// Output: 14
 }
 
 func Example_opcompare() {
