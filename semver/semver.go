@@ -14,8 +14,9 @@ method:
 
 < - Less than.
 
-Custom operator syntax for version comparisons can be defined with the Operators
-struct and Config method.
+The syntax of the comparison operators can be customized with the Operators
+struct and Config method, which makes it easy to handle version comparisons with
+any package manager format.
 */
 package SemVer
 
@@ -252,10 +253,13 @@ func (v *Version) Compare(version *Version) int {
 
 /*
 comparePreRelease is an internal method that evalutes only the current version
-PreRelease value against the preRelease param. Similar to Compare, it returns
-1 if the current version.PreRelease is greater than the preRelease param, -1 if
-the current version.PreRelease is less than the preRelease param, and 0 if they
+pre release value against the preRelease param. Similar to Compare, it returns
+1 if the current version pre release is greater than the preRelease param, -1 if
+the current version pre release is less than the preRelease param, and 0 if they
 are equal.
+
+See https://semver.org/#spec-item-11 for more details on precedence with pre
+release values.
 */
 func (v *Version) comparePreRelease(preRelease string) int {
 	if v.preRelease == "" && preRelease == "" {
@@ -271,8 +275,8 @@ func (v *Version) comparePreRelease(preRelease string) int {
 	}
 
 	// split pre release string parts
-	vp := strings.FieldsFunc(v.preRelease, splitRelease)
-	versionp := strings.FieldsFunc(preRelease, splitRelease)
+	vp := strings.Split(v.preRelease, ".")
+	versionp := strings.Split(preRelease, ".")
 
 	// fill missing values
 	if len(vp) < len(versionp) {
@@ -299,11 +303,6 @@ func (v *Version) comparePreRelease(preRelease string) int {
 	}
 
 	return 0
-}
-
-// splitRelease is a helper method to split a string on '-' or '.' characters.
-func splitRelease(r rune) bool {
-	return r == '-' || r == '.'
 }
 
 /*
