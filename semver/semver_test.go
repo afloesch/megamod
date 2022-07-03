@@ -6,9 +6,77 @@ import (
 	. "github.com/franela/goblin"
 )
 
+func TestSemVerParse(t *testing.T) {
+	g := Goblin(t)
+	g.Describe("SemVer string parsing to version", func() {
+		g.It("Should parse all semantic version parts", func() {
+			v := SemVer(">=v1.2.3-pre+meta").Get()
+			g.Assert(string(v.Operator)).Equal(">=")
+			g.Assert(int(v.Major)).Equal(1)
+			g.Assert(int(v.Minor)).Equal(2)
+			g.Assert(int(v.Patch)).Equal(3)
+			g.Assert(v.PreRelease).Equal("pre")
+			g.Assert(v.BuildMetadata).Equal("meta")
+		})
+
+		g.It("Should return string value for SemVer", func() {
+			v := SemVer(">=v1.2.3-pre+meta")
+			g.Assert(v.String()).Equal(">=v1.2.3-pre+meta")
+		})
+
+		g.It("Should return semantic string for version", func() {
+			v := SemVer(">=v1.2.3-pre+meta").Get()
+			g.Assert(v.String()).Equal("v1.2.3-pre+meta")
+		})
+
+		g.It("Should return SemVer string for version", func() {
+			v := SemVer(">=v1.2.3-pre+meta").Get()
+			g.Assert(v.ToSemVer().String()).Equal(">=v1.2.3-pre+meta")
+		})
+
+		g.It("Should parse invalid semantic version to v0.0.0", func() {
+			v := SemVer("nosemver").Get()
+			g.Assert(string(v.Operator)).Equal("")
+			g.Assert(int(v.Major)).Equal(0)
+			g.Assert(int(v.Minor)).Equal(0)
+			g.Assert(int(v.Patch)).Equal(0)
+			g.Assert(v.PreRelease).Equal("")
+			g.Assert(v.BuildMetadata).Equal("")
+		})
+	})
+}
+
+func TestConfig(t *testing.T) {
+	g := Goblin(t)
+	g.Describe("Parse with custom config", func() {
+		g.It("Should support custom Operator syntax", func() {
+			conf := Config(Operators{
+				GT:  Operator("+"),
+				GTE: Operator("+="),
+				LT:  Operator("-"),
+				LTE: Operator("-="),
+			}, `[\+|-]+=?`)
+
+			v := SemVer("+=v1.0.0").Get(conf)
+			g.Assert(v.OpCompare(SemVer("v1.1.0").Get())).IsTrue()
+			g.Assert(v.OpCompare(SemVer("v0.9.0").Get())).IsFalse()
+			v = SemVer("+v1.0.0").Get(conf)
+			g.Assert(v.OpCompare(SemVer("v1.1.0").Get())).IsTrue()
+			g.Assert(v.OpCompare(SemVer("v1.0.0").Get())).IsFalse()
+			g.Assert(v.OpCompare(SemVer("v0.9.0").Get())).IsFalse()
+			v = SemVer("-v1.0.0").Get(conf)
+			g.Assert(v.OpCompare(SemVer("v1.1.0").Get())).IsFalse()
+			g.Assert(v.OpCompare(SemVer("v1.0.0").Get())).IsFalse()
+			g.Assert(v.OpCompare(SemVer("v0.9.0").Get())).IsTrue()
+			v = SemVer("-=v1.0.0").Get(conf)
+			g.Assert(v.OpCompare(SemVer("v1.1.0").Get())).IsFalse()
+			g.Assert(v.OpCompare(SemVer("v1.0.0").Get())).IsTrue()
+		})
+	})
+}
+
 func TestOpCompare(t *testing.T) {
 	g := Goblin(t)
-
 	g.Describe("Version operator compare", func() {
 		g.It("Evaluate greater than operator", func() {
 			v := SemVer(">v1.0.0").Get()
