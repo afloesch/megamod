@@ -29,7 +29,7 @@ import (
 // See https://regex101.com/r/CkWF3o/1 for regex testing.
 var opRe string = `[>|<]+=?`
 var semverRe string = `(?:v)?([\d]+).([\d]+).([\d]+)(?:-((?:[.|-]?[\d\w]+)+))?(?:\+)?((?:[.|-]?[\d\w]+)+)?`
-var re *regexp.Regexp = regexp.MustCompile(fmt.Sprintf("^(%s)?%s$", opRe, semverRe))
+var re *regexp.Regexp = regexp.MustCompile(fmt.Sprintf("(?m)^(%s)?%s$", opRe, semverRe))
 
 var defaultConf *config = &config{
 	ops: &Operators{
@@ -70,7 +70,7 @@ func Config(ops Operators, regex string) *config {
 	regex = strings.TrimSuffix(regex, "$")
 	return &config{
 		ops: &ops,
-		re:  regexp.MustCompile(fmt.Sprintf("^(%s)?%s$", regex, semverRe)),
+		re:  regexp.MustCompile(fmt.Sprintf("(?m)^(%s)?%s$", regex, semverRe)),
 	}
 }
 
