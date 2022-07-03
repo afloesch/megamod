@@ -119,6 +119,11 @@ func TestOpCompare(t *testing.T) {
 			g.Assert(v.OpCompare(v2)).IsFalse()
 			g.Assert(v.OpCompare(v3)).IsTrue()
 		})
+		g.It("Should handle invalid comarison operator", func() {
+			v := String("~~v1.0.0").Get()
+			v2 := String("v1.1.0").Get()
+			g.Assert(v.OpCompare(v2)).IsFalse()
+		})
 	})
 }
 
@@ -315,7 +320,21 @@ func ExampleConfig() {
 	}, `[\+|-]+=?`)
 
 	v := String("+=v1.0.0").Get(conf)
-	fmt.Println(v.OpCompare(String("v1.1.0").Get()))
+	fmt.Println(v.OpCompare(String("v1.0.0").Get()))
+	// Output: true
+}
+
+func ExampleConfig_gteorlte() {
+	// support only GTE or LTE comparisons.
+	conf := Config(Operators{
+		GT:  Operator(">="),
+		GTE: Operator(">="),
+		LT:  Operator("<="),
+		LTE: Operator("<="),
+	}, `[>|<]+=`)
+
+	v := String(">=v1.0.0").Get(conf)
+	fmt.Println(v.OpCompare(String("v1.0.0").Get()))
 	// Output: true
 }
 

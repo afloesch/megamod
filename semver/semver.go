@@ -31,8 +31,8 @@ var opRe string = `[>|<]+=?`
 var semverRe string = `(?:v)?([\d]+).([\d]+).([\d]+)(?:-((?:[.|-]?[\d\w]+)+))?(?:\+)?((?:[.|-]?[\d\w]+)+)?`
 var re *regexp.Regexp = regexp.MustCompile(fmt.Sprintf("^(%s)?%s$", opRe, semverRe))
 
-var defaultConf config = config{
-	ops: Operators{
+var defaultConf *config = &config{
+	ops: &Operators{
 		GT:  Operator(">"),
 		GTE: Operator(">="),
 		LT:  Operator("<"),
@@ -54,12 +54,12 @@ type Operators struct {
 }
 
 type config struct {
-	ops Operators
+	ops *Operators
 	re  *regexp.Regexp
 }
 
 /*
-Config returns an intialized config object which can be passed to the SemVer.Get
+Config returns an intialized config object which can be passed to the String.Get
 method and define custom operator syntax and regex.
 
 The regex string to parse the operators is combined with the SemVer regex. An invalid
@@ -69,7 +69,7 @@ func Config(ops Operators, regex string) *config {
 	regex = strings.TrimPrefix(regex, "^")
 	regex = strings.TrimSuffix(regex, "$")
 	return &config{
-		ops: ops,
+		ops: &ops,
 		re:  regexp.MustCompile(fmt.Sprintf("^(%s)?%s$", regex, semverRe)),
 	}
 }
@@ -166,6 +166,10 @@ Version Operators on the version param are ignored.
 */
 func (v *Version) OpCompare(version *Version) bool {
 	i := v.Compare(version)
+
+	if v.Operator == "" {
+		return i == 0
+	}
 
 	switch v.Operator {
 	case v.Config.ops.GTE:
@@ -284,7 +288,7 @@ Get returns a Version from the String. Strings which are not
 valid semantic versions will evaluate to v0.0.0.
 */
 func (v String) Get(conf ...*config) *Version {
-	set := &defaultConf
+	set := defaultConf
 	if conf != nil && conf[0] != nil {
 		set = conf[0]
 	}
