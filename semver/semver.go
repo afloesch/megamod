@@ -2,6 +2,20 @@
 Package SemVer provides methods for parsing and comparing semantic versions
 following the https://semver.org specification, as well as support for version
 comparison operations with custom defined operator syntax.
+
+The following default operators are enabled when using the Version.OpCompare
+method:
+
+>= - Greater than or equal to.
+
+> - Greater than.
+
+<= - Less than or equal to.
+
+< - Less than.
+
+Custom operator syntax for version comparisons can be defined with the Operators
+struct and Config method.
 */
 package SemVer
 

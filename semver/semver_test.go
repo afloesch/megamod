@@ -207,6 +207,27 @@ func TestComparePreRelease(t *testing.T) {
 	})
 }
 
+func Example() {
+	v := String("v3.14.15").Get()
+	v2 := String("3.14.15").Get()
+	fmt.Println(v.Compare(v2))
+	// Output: 0
+}
+
+func Example_alt() {
+	v := String("v3.14.15").Get()
+	v2 := String("1.0.0").Get()
+	fmt.Println(v.Compare(v2))
+	// Output: 1
+}
+
+func Example_opcompare() {
+	v := String(">=v3.14.15").Get()
+	v2 := String("3.14.16").Get()
+	fmt.Println(v.OpCompare(v2))
+	// Output: true
+}
+
 func ExampleString() {
 	v := String(">=v3.14.15")
 	fmt.Println(v.String())
