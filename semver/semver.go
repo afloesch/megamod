@@ -276,13 +276,6 @@ func splitRelease(r rune) bool {
 	return r == '-' || r == '.'
 }
 
-// String returns the SemVer.String type as a string.
-//
-// {Operator}v{Major}.{Minor}.{Patch}-{PreRelease}+{BuildMetadata}
-func (v String) String() string {
-	return string(v)
-}
-
 /*
 Get returns a Version from the String. Strings which are not
 valid semantic versions will evaluate to v0.0.0.
@@ -293,7 +286,7 @@ func (v String) Get(conf ...*config) *Version {
 		set = conf[0]
 	}
 
-	parts := set.re.FindStringSubmatch(v.String())
+	parts := set.re.FindStringSubmatch(string(v))
 	if len(parts) != 7 {
 		return &Version{}
 	}

@@ -21,9 +21,9 @@ func TestSemVerParse(t *testing.T) {
 			g.Assert(v.BuildMetadata).Equal("meta")
 		})
 
-		g.It("Should return string value for SemVer", func() {
+		g.It("Should return string value for SemVer.String", func() {
 			v := String(">=v1.2.3-pre+meta")
-			g.Assert(v.String()).Equal(">=v1.2.3-pre+meta")
+			g.Assert(string(v)).Equal(">=v1.2.3-pre+meta")
 		})
 
 		g.It("Should return semantic string for version", func() {
@@ -31,9 +31,9 @@ func TestSemVerParse(t *testing.T) {
 			g.Assert(v.String()).Equal("v1.2.3-pre+meta")
 		})
 
-		g.It("Should return SemVer string for version", func() {
+		g.It("Should return SemVer.String for version", func() {
 			v := String(">=v1.2.3-pre+meta").Get()
-			g.Assert(v.ToString().String()).Equal(">=v1.2.3-pre+meta")
+			g.Assert(string(v.ToString())).Equal(">=v1.2.3-pre+meta")
 		})
 
 		g.It("Should parse invalid semantic version to v0.0.0", func() {
@@ -261,14 +261,6 @@ func Example_opcompare() {
 	// Use OpCompare for a simple boolean result.
 	fmt.Println(v.OpCompare(v2))
 	// Output: false
-}
-
-func ExampleString_String() {
-	v := String(">=v3.14.15")
-
-	// String() returns the full string value.
-	fmt.Println(v.String())
-	// Output: >=v3.14.15
 }
 
 func ExampleVersion_String() {
