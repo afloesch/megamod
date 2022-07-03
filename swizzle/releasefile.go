@@ -56,7 +56,7 @@ func (f *ReleaseFile) download(ctx context.Context, path string, m *Manifest) er
 		}
 	}
 
-	resp, err := m.Repo.ReleaseFile(ctx, f.asset)
+	resp, err := m.Repo.FetchReleaseAsset(ctx, f.asset)
 	if err != nil {
 		return err
 	}

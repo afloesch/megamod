@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"strings"
 
-	SemVer "github.com/afloesch/semver"
+	"github.com/afloesch/semver"
 	"github.com/go-resty/resty/v2"
 	"github.com/google/go-github/v45/github"
 )
@@ -51,6 +51,32 @@ func (r Repo) String() string {
 	return string(r)
 }
 
+// LatestManifest attempts to find the latest swizzle release from a
+// github repository.
+func (r Repo) LatestManifest(ctx context.Context) (*Manifest, error) {
+	rel, err := r.Releases(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var release *github.RepositoryRelease
+	var asset *github.ReleaseAsset
+	for _, r := range rel {
+		for _, a := range r.Assets {
+			if a.GetName() == manifestName {
+				asset = a
+				release = r
+			}
+		}
+	}
+
+	if asset == nil {
+		return nil, fmt.Errorf("manifest not found")
+	}
+
+	return r.manifest(ctx, asset, release)
+}
+
 // Manifest fetches a swizzle Manifest from a release.
 func (r Repo) Manifest(ctx context.Context, release *github.RepositoryRelease) (*Manifest, error) {
 	if release == nil {
@@ -68,7 +94,11 @@ func (r Repo) Manifest(ctx context.Context, release *github.RepositoryRelease) (
 		return nil, fmt.Errorf("manifest not found")
 	}
 
-	resp, err := r.ReleaseFile(ctx, asset)
+	return r.manifest(ctx, asset, release)
+}
+
+func (r Repo) manifest(ctx context.Context, asset *github.ReleaseAsset, release *github.RepositoryRelease) (*Manifest, error) {
+	resp, err := r.FetchReleaseAsset(ctx, asset)
 	if err != nil {
 		return nil, err
 	}
@@ -91,13 +121,13 @@ func (r Repo) Manifest(ctx context.Context, release *github.RepositoryRelease) (
 	mani.release = release
 	mani.releaseAsset = asset
 	mani.Repo = r
-	mani.Version = SemVer.String(release.GetTagName())
+	mani.Version = semver.String(release.GetTagName())
 	return mani, nil
 }
 
 // Release fetches a repository release.
 func (r Repo) Release(ctx context.Context, version string) (*github.RepositoryRelease, error) {
-	ver := SemVer.String(version).Get()
+	ver := semver.String(version).Get()
 
 	rel, err := r.Releases(ctx)
 	if err != nil {
@@ -145,8 +175,8 @@ func (r Repo) Releases(ctx context.Context) ([]*github.RepositoryRelease, error)
 	return rel, nil
 }
 
-// ReleaseFile fetches a release asset and returns the http.Response from the request.
-func (r Repo) ReleaseFile(ctx context.Context, asset *github.ReleaseAsset) (*http.Response, error) {
+// FetchReleaseAsset fetches a release asset and returns the http.Response from the request.
+func (r Repo) FetchReleaseAsset(ctx context.Context, asset *github.ReleaseAsset) (*http.Response, error) {
 	if asset == nil {
 		return nil, fmt.Errorf("nil asset")
 	}
