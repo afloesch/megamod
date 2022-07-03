@@ -167,22 +167,21 @@ Version Operators on the version param are ignored.
 func (v *Version) OpCompare(version *Version) bool {
 	i := v.Compare(version)
 
-	if v.Operator == "" {
-		return i == 0
+	var t bool
+	switch v.Operator {
+	case "":
+		t = i == 0
+	case v.Config.ops.GTE:
+		t = i <= 0
+	case v.Config.ops.GT:
+		t = i < 0
+	case v.Config.ops.LTE:
+		t = i >= 0
+	case v.Config.ops.LT:
+		t = i > 0
 	}
 
-	switch v.Operator {
-	case v.Config.ops.GTE:
-		return i <= 0
-	case v.Config.ops.GT:
-		return i < 0
-	case v.Config.ops.LTE:
-		return i >= 0
-	case v.Config.ops.LT:
-		return i > 0
-	default:
-		return i == 0
-	}
+	return t
 }
 
 /*
