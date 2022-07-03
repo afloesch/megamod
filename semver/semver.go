@@ -131,7 +131,7 @@ type Version struct {
 	BuildMetadata string
 	// Config is the Operators and Regex configuration to use for version comparison
 	// operators
-	Config *config
+	config *config
 }
 
 // ToString returns the SemVer.String for the version.
@@ -172,13 +172,13 @@ func (v *Version) OpCompare(version *Version) bool {
 	switch v.Operator {
 	case "":
 		t = i == 0
-	case v.Config.ops.GTE:
+	case v.config.ops.GTE:
 		t = i <= 0
-	case v.Config.ops.GT:
+	case v.config.ops.GT:
 		t = i < 0
-	case v.Config.ops.LTE:
+	case v.config.ops.LTE:
 		t = i >= 0
-	case v.Config.ops.LT:
+	case v.config.ops.LT:
 		t = i > 0
 	}
 
@@ -303,6 +303,6 @@ func (v String) Get(conf ...*config) *Version {
 		PreRelease:    parts[5],
 		BuildMetadata: parts[6],
 
-		Config: set,
+		config: set,
 	}
 }
