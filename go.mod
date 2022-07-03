@@ -3,8 +3,8 @@ module github.com/afloesch/megamod
 go 1.18
 
 require (
+	github.com/afloesch/semver v1.0.1
 	github.com/bodgit/sevenzip v1.2.2
-	github.com/franela/goblin v0.0.0-20211003143422-0a4f594942bf
 	github.com/go-resty/resty/v2 v2.7.0
 	github.com/google/go-github/v45 v45.2.0
 	gopkg.in/yaml.v3 v3.0.1

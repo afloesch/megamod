@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"strings"
 
-	SemVer "github.com/afloesch/megamod/semver"
+	SemVer "github.com/afloesch/semver"
 	"github.com/go-resty/resty/v2"
 	"github.com/google/go-github/v45/github"
 )

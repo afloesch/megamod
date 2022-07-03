@@ -8,10 +8,9 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/afloesch/semver"
 	"github.com/google/go-github/v45/github"
 	"gopkg.in/yaml.v3"
-
-	SemVer "github.com/afloesch/megamod/semver"
 )
 
 const manifestName string = "swiz.zle"
@@ -24,10 +23,10 @@ type Game struct {
 	// file extension.
 	Executable string `json:"executable,omitempty" yaml:"executable,omitempty"`
 
-	// The supported game version/(s) for the mod based on a SemVer semantic
+	// The supported game version/(s) for the mod based on a semver semantic
 	// string format. An empty version is equivalent to >=v0.0.0 and so will
 	// match all game versions.
-	Version SemVer.String `json:"version,omitempty" yaml:"version,omitempty"`
+	Version semver.String `json:"version,omitempty" yaml:"version,omitempty"`
 }
 
 // Manifest defines the swiz.zle file format for a mod release. All mods released
@@ -39,7 +38,7 @@ type Manifest struct {
 	AgeRating AgeRating `json:"ages,omitempty" yaml:"ages,omitempty"`
 
 	// Dependency is the optional list of dependent mods for the swizzle manifest.
-	Dependency map[Repo]SemVer.String `json:"dependency,omitempty" yaml:"dependency,omitempty"`
+	Dependency map[Repo]semver.String `json:"dependency,omitempty" yaml:"dependency,omitempty"`
 
 	// An optional short description for the mod.
 	Description string `json:"description,omitempty" yaml:"description,omitempty"`
@@ -66,7 +65,7 @@ type Manifest struct {
 	Repo Repo `json:"repo,omitempty" yaml:"repo,omitempty"`
 
 	// Mod version. Must use semantic versioning.
-	Version SemVer.String `json:"version,omitempty" yaml:"version,omitempty"`
+	Version semver.String `json:"version,omitempty" yaml:"version,omitempty"`
 
 	release      *github.RepositoryRelease
 	releaseAsset *github.ReleaseAsset
@@ -75,14 +74,14 @@ type Manifest struct {
 // New creates an empty swizzle manifest.
 func New() *Manifest {
 	return &Manifest{
-		Dependency: map[Repo]SemVer.String{},
+		Dependency: map[Repo]semver.String{},
 	}
 }
 
 func (m *Manifest) SetGame(executable, version string) *Manifest {
 	m.Game = Game{
 		Executable: executable,
-		Version:    SemVer.String(version),
+		Version:    semver.String(version),
 	}
 	return m
 }
@@ -93,7 +92,7 @@ func (m *Manifest) SetRepo(repo string) *Manifest {
 }
 
 func (m *Manifest) SetVersion(version string) *Manifest {
-	m.Version = SemVer.String(version)
+	m.Version = semver.String(version)
 	return m
 }
 
@@ -101,7 +100,7 @@ func (m *Manifest) SetVersion(version string) *Manifest {
 // to the manifest.
 func (m *Manifest) AddDependency(ctx context.Context, repo string, version string) error {
 	r := Repo(repo)
-	v := SemVer.String(version).Get()
+	v := semver.String(version).Get()
 	rel, err := r.Release(ctx, version)
 	if err != nil {
 		return err
@@ -123,9 +122,9 @@ func (m *Manifest) AddDependency(ctx context.Context, repo string, version strin
 	return m.addDependency(r, v)
 }
 
-func (m *Manifest) addDependency(repo Repo, version *SemVer.Version) error {
+func (m *Manifest) addDependency(repo Repo, version *semver.Version) error {
 	if m.Dependency == nil {
-		m.Dependency = map[Repo]SemVer.String{}
+		m.Dependency = map[Repo]semver.String{}
 	}
 
 	var exists bool
@@ -211,7 +210,7 @@ func ParseManifest(data []byte) (*Manifest, error) {
 	}
 
 	if manifest.Dependency == nil {
-		manifest.Dependency = map[Repo]SemVer.String{}
+		manifest.Dependency = map[Repo]semver.String{}
 	}
 
 	return manifest, nil
