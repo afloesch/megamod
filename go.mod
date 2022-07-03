@@ -7,6 +7,7 @@ require (
 	github.com/bodgit/sevenzip v1.2.2
 	github.com/go-resty/resty/v2 v2.7.0
 	github.com/google/go-github/v45 v45.2.0
+	github.com/inhies/go-bytesize v0.0.0-20220417184213-4913239db9cf
 	gopkg.in/yaml.v3 v3.0.1
 )
 

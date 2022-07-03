@@ -3,10 +3,12 @@ package swizzle
 import (
 	"context"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 
 	"github.com/google/go-github/v45/github"
+	"github.com/inhies/go-bytesize"
 )
 
 // ReleaseFile is an archived file for a mod release, hosted on GitHub releases.
@@ -24,6 +26,11 @@ type ReleaseFile struct {
 
 	archive Archive
 	asset   *github.ReleaseAsset
+	size    int64
+}
+
+func (f *ReleaseFile) Size() bytesize.ByteSize {
+	return bytesize.New(float64(f.size))
 }
 
 // setReleaseAssset matches a ReleaseFile with the set of github release assets.
@@ -39,26 +46,33 @@ func (f *ReleaseFile) setReleaseAsset(assets []*github.ReleaseAsset) {
 //
 // Downloaded file names are appended with the repo name and the release version to
 // prevent naming conflicts with other release files.
-func (f *ReleaseFile) download(ctx context.Context, path string, m *Manifest) error {
+func (f *ReleaseFile) download(
+	ctx context.Context,
+	path string,
+	m *Manifest,
+	done chan bool,
+	prog chan float64,
+	errCh chan error,
+) {
 	if m == nil {
-		return fmt.Errorf("nil manifest")
+		errCh <- fmt.Errorf("nil manifest")
 	}
 
 	if f.asset == nil {
-		return fmt.Errorf("nil release archive")
+		errCh <- fmt.Errorf("nil manifest")
 	}
 
 	cleanpath := filepath.Clean(path)
 	if _, err := os.Stat(cleanpath); err != nil {
 		err = os.MkdirAll(cleanpath, 0755)
 		if err != nil {
-			return err
+			errCh <- err
 		}
 	}
 
 	resp, err := m.Repo.FetchReleaseAsset(ctx, f.asset)
 	if err != nil {
-		return err
+		errCh <- err
 	}
 	defer resp.Body.Close()
 
@@ -66,15 +80,45 @@ func (f *ReleaseFile) download(ctx context.Context, path string, m *Manifest) er
 		fmt.Sprintf("%s-%s-%s", m.Repo.Name(), m.Version.Get(nil).String(), f.Name),
 		cleanpath,
 	)
+
 	out, err := os.Create(f.archive.Location())
 	if err != nil {
-		return err
+		errCh <- err
 	}
 	defer out.Close()
 
-	_, err = out.ReadFrom(resp.Body)
+	f.size = resp.ContentLength
+	progress := 0
+	chunkSize := 500
+	fmt.Println("total size", f.Size())
+
+	for {
+		var buf = make([]byte, chunkSize)
+		err := readWriteChunk(resp.Body, out, buf)
+		if err != nil {
+			if err == io.EOF {
+				done <- true
+			}
+
+			errCh <- err
+		}
+		progress = progress + chunkSize
+		calc := 100 * float64(progress) / float64(f.size)
+		prog <- calc
+	}
+}
+
+func readWriteChunk(data io.ReadCloser, out *os.File, buf []byte) error {
+	r, err := data.Read(buf)
 	if err != nil {
 		return err
+	}
+
+	if r > 0 {
+		_, err = out.Write(buf[:r])
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"math"
 	"os"
 	"path/filepath"
 
@@ -152,24 +153,35 @@ func (m *Manifest) addDependency(repo Repo, version *semver.Version) error {
 	return nil
 }
 
-// DownloadReleaseFiles fetches and writes all release archives to the system
+// DownloadReleaseFile fetches and writes all release archives to the system
 // at the given folder path.
-func (m *Manifest) DownloadReleaseFiles(ctx context.Context, path string) error {
-	for _, f := range m.Files {
-		err := f.download(ctx, path, m)
-		if err != nil {
+func (m *Manifest) DownloadReleaseFile(ctx context.Context, file *ReleaseFile, path string) error {
+	done := make(chan bool)
+	progCh := make(chan float64)
+	errCh := make(chan error)
+	go file.download(ctx, path, m, done, progCh, errCh)
+
+	var prog float64
+	var err error
+	for {
+		select {
+		case <-done:
+			return nil
+		case prog = <-progCh:
+			fmt.Println(fmt.Sprintf("%v%% of %v", math.Floor(prog), file.Size()))
+		case err = <-errCh:
 			return err
 		}
 	}
 
-	fname := fmt.Sprintf(
+	/*fname := fmt.Sprintf(
 		"%s-%s.%s",
 		m.Repo.Name(),
 		m.Version.Get().String(),
 		manifestName,
 	)
 	fpath := filepath.Clean(filepath.Join(path, fname))
-	return m.WriteFile(fpath)
+	return m.WriteFile(fpath)*/
 }
 
 // WriteFile adds the manifest file to the file system at the given path.

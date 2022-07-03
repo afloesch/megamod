@@ -27,7 +27,7 @@ func main() {
 
 	if len(mod.Files) > 0 {
 		fmt.Println("downloading mod:", mod.Name)
-		err = mod.DownloadReleaseFiles(ctx, path)
+		err = mod.DownloadReleaseFile(ctx, mod.Files[0], path)
 		if err != nil {
 			fmt.Println(err)
 			return
