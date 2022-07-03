@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strings"
 
+	SemVer "github.com/afloesch/megamod/semver"
 	"github.com/go-resty/resty/v2"
 	"github.com/google/go-github/v45/github"
 )
@@ -90,13 +91,13 @@ func (r Repo) Manifest(ctx context.Context, release *github.RepositoryRelease) (
 	mani.release = release
 	mani.releaseAsset = asset
 	mani.Repo = r
-	mani.Version = SemVer(release.GetTagName())
+	mani.Version = SemVer.String(release.GetTagName())
 	return mani, nil
 }
 
 // Release fetches a repository release.
 func (r Repo) Release(ctx context.Context, version string) (*github.RepositoryRelease, error) {
-	ver := SemVer(version).Get(nil)
+	ver := SemVer.String(version).Get()
 
 	rel, err := r.Releases(ctx)
 	if err != nil {

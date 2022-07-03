@@ -10,6 +10,8 @@ import (
 
 	"github.com/google/go-github/v45/github"
 	"gopkg.in/yaml.v3"
+
+	SemVer "github.com/afloesch/megamod/semver"
 )
 
 const manifestName string = "swiz.zle"
@@ -25,7 +27,7 @@ type Game struct {
 	// The supported game version/(s) for the mod based on a SemVer semantic
 	// string format. An empty version is equivalent to >=v0.0.0 and so will
 	// match all game versions.
-	Version SemVer `json:"version,omitempty" yaml:"version,omitempty"`
+	Version SemVer.String `json:"version,omitempty" yaml:"version,omitempty"`
 }
 
 // Manifest defines the swiz.zle file format for a mod release. All mods released
@@ -37,7 +39,7 @@ type Manifest struct {
 	AgeRating AgeRating `json:"ages,omitempty" yaml:"ages,omitempty"`
 
 	// Dependency is the optional list of dependent mods for the swizzle manifest.
-	Dependency map[Repo]SemVer `json:"dependency,omitempty" yaml:"dependency,omitempty"`
+	Dependency map[Repo]SemVer.String `json:"dependency,omitempty" yaml:"dependency,omitempty"`
 
 	// An optional short description for the mod.
 	Description string `json:"description,omitempty" yaml:"description,omitempty"`
@@ -64,7 +66,7 @@ type Manifest struct {
 	Repo Repo `json:"repo,omitempty" yaml:"repo,omitempty"`
 
 	// Mod version. Must use semantic versioning.
-	Version SemVer `json:"version,omitempty" yaml:"version,omitempty"`
+	Version SemVer.String `json:"version,omitempty" yaml:"version,omitempty"`
 
 	release      *github.RepositoryRelease
 	releaseAsset *github.ReleaseAsset
@@ -73,14 +75,14 @@ type Manifest struct {
 // New creates an empty swizzle manifest.
 func New() *Manifest {
 	return &Manifest{
-		Dependency: map[Repo]SemVer{},
+		Dependency: map[Repo]SemVer.String{},
 	}
 }
 
 func (m *Manifest) SetGame(executable, version string) *Manifest {
 	m.Game = Game{
 		Executable: executable,
-		Version:    SemVer(version),
+		Version:    SemVer.String(version),
 	}
 	return m
 }
@@ -91,7 +93,7 @@ func (m *Manifest) SetRepo(repo string) *Manifest {
 }
 
 func (m *Manifest) SetVersion(version string) *Manifest {
-	m.Version = SemVer(version)
+	m.Version = SemVer.String(version)
 	return m
 }
 
@@ -99,7 +101,7 @@ func (m *Manifest) SetVersion(version string) *Manifest {
 // to the manifest.
 func (m *Manifest) AddDependency(ctx context.Context, repo string, version string) error {
 	r := Repo(repo)
-	v := SemVer(version).Get(nil)
+	v := SemVer.String(version).Get()
 	rel, err := r.Release(ctx, version)
 	if err != nil {
 		return err
@@ -112,7 +114,7 @@ func (m *Manifest) AddDependency(ctx context.Context, repo string, version strin
 
 	for k := range dep.Dependency {
 		subVer := dep.Dependency[k]
-		err = m.addDependency(k, subVer.Get(nil))
+		err = m.addDependency(k, subVer.Get())
 		if err != nil {
 			return err
 		}
@@ -121,31 +123,31 @@ func (m *Manifest) AddDependency(ctx context.Context, repo string, version strin
 	return m.addDependency(r, v)
 }
 
-func (m *Manifest) addDependency(repo Repo, version *Version) error {
+func (m *Manifest) addDependency(repo Repo, version *SemVer.Version) error {
 	if m.Dependency == nil {
-		m.Dependency = map[Repo]SemVer{}
+		m.Dependency = map[Repo]SemVer.String{}
 	}
 
 	var exists bool
 	for k := range m.Dependency {
 		if k == repo {
 			exists = true
-			currVer := m.Dependency[repo].Get(nil)
+			currVer := m.Dependency[repo].Get()
 			if ok := currVer.OpCompare(version); ok {
-				m.Dependency[repo] = SemVer(version.SemVer())
+				m.Dependency[repo] = version.ToString()
 			} else {
 				return fmt.Errorf(
 					"'%s' version '%s' is incompatible with '%s'",
 					repo.String(),
-					currVer.SemVer().String(),
-					version.SemVer().String(),
+					currVer.String(),
+					version.String(),
 				)
 			}
 		}
 	}
 
 	if !exists {
-		m.Dependency[repo] = SemVer(version.SemVer())
+		m.Dependency[repo] = version.ToString()
 	}
 
 	return nil
@@ -164,7 +166,7 @@ func (m *Manifest) DownloadReleaseFiles(ctx context.Context, path string) error 
 	fname := fmt.Sprintf(
 		"%s-%s.%s",
 		m.Repo.Name(),
-		m.Version.Get(nil).String(),
+		m.Version.Get().String(),
 		manifestName,
 	)
 	fpath := filepath.Clean(filepath.Join(path, fname))
@@ -209,7 +211,7 @@ func ParseManifest(data []byte) (*Manifest, error) {
 	}
 
 	if manifest.Dependency == nil {
-		manifest.Dependency = map[Repo]SemVer{}
+		manifest.Dependency = map[Repo]SemVer.String{}
 	}
 
 	return manifest, nil

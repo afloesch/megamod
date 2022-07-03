@@ -58,8 +58,8 @@ regex string will result in a panic.
 		LTE: SemVer.Operator("-="),
 	}, `[\+|-]+=?`)
 
-	v := SemVer("+=v1.0.0").Get(conf)
-	fmt.Println(v.Compare(SemVer("v1.1.0").Get()))
+	v := SemVer.String("+=v1.0.0").Get(conf)
+	fmt.Println(v.Compare(SemVer.String("v1.1.0").Get()))
 */
 func Config(ops Operators, regex string) *config {
 	regex = strings.TrimPrefix(regex, "^")
@@ -90,8 +90,8 @@ an optional comparison Operator. For example:
 A String can be parsed to a Version for value parsing or
 comparisons.
 
-	ver := SemVer("v1.0.0").Get()
-	i := ver.Compare(SemVer("v2.0.0").Get())
+	ver := SemVer.String("v1.0.0").Get()
+	i := ver.Compare(SemVer.String("v2.0.0").Get())
 	fmt.Println(i == -1)
 
 The "v" string character at the beginning of the version technically
@@ -99,7 +99,7 @@ does not conform to the https://semver.org specification, but is a
 common convention when representing a semantic version in string format.
 For this reason String treats the "v" in a version string as optional.
 */
-type SemVer string
+type String string
 
 /*
 version is a semantic version augmented with an Operator for fine grained
@@ -108,7 +108,7 @@ versioning rules and simple comparisons.
 See https://semver.org/ for more info on semantic versioning and version
 comparisons.
 */
-type version struct {
+type Version struct {
 	// Operator is an optional value for the set of comparison operators for the
 	// version. See the SemVer.Operators for more info.
 	Operator Operator
@@ -130,21 +130,21 @@ type version struct {
 	// a '-' or '.', and is not factored into version comparisons.
 	BuildMetadata string
 
-	conf *config
+	Config *config
 }
 
-// ToSemVer returns the SemVer for the version.
-func (v *version) ToSemVer() SemVer {
+// ToString returns the SemVer.String for the version.
+func (v *Version) ToString() String {
 	var s strings.Builder
 	s.WriteString(string(v.Operator))
 	s.WriteString(v.String())
-	return SemVer(s.String())
+	return String(s.String())
 }
 
 // String returns the version in semantic version string format.
 //
 // v{Major}.{Minor}.{Patch}-{PreRelease}+{BuildMetadata}
-func (v *version) String() string {
+func (v *Version) String() string {
 	var s strings.Builder
 	s.WriteString(fmt.Sprintf("v%v.%v.%v", v.Major, v.Minor, v.Patch))
 	if v.PreRelease != "" {
@@ -166,21 +166,21 @@ Version Operators on the version param are ignored.
 
 Example:
 
-	ver := SemVer(">=v1.2.3").Get()
-	fail := ver.OpCompare(SemVer("1.0.0").Get())
+	ver := SemVer.String(">=v1.2.3").Get()
+	fail := ver.OpCompare(SemVer.String("1.0.0").Get())
 	fmt.Println(fail)
 */
-func (v *version) OpCompare(version *version) bool {
+func (v *Version) OpCompare(version *Version) bool {
 	i := v.Compare(version)
 
 	switch v.Operator {
-	case v.conf.ops.GTE:
+	case v.Config.ops.GTE:
 		return i <= 0
-	case v.conf.ops.GT:
+	case v.Config.ops.GT:
 		return i < 0
-	case v.conf.ops.LTE:
+	case v.Config.ops.LTE:
 		return i >= 0
-	case v.conf.ops.LT:
+	case v.Config.ops.LT:
 		return i > 0
 	default:
 		return i == 0
@@ -194,7 +194,7 @@ the version param, -1 if the current version is less than the version param, and
 
 Comparison logic is implemented to the https://semver.org specification.
 */
-func (v *version) Compare(version *version) int {
+func (v *Version) Compare(version *Version) int {
 	if v.Major > version.Major {
 		return 1
 	}
@@ -229,7 +229,7 @@ PreRelease value against the preRelease param. Similar to Compare, it returns
 the current version.PreRelease is less than the preRelease param, and 0 if they
 are equal.
 */
-func (v *version) comparePreRelease(preRelease string) int {
+func (v *Version) comparePreRelease(preRelease string) int {
 	if v.PreRelease == "" && preRelease == "" {
 		return 0
 	}
@@ -281,7 +281,7 @@ func splitRelease(r rune) bool {
 // String returns the SemVer.String type as a string.
 //
 // {Operator}v{Major}.{Minor}.{Patch}-{PreRelease}+{BuildMetadata}
-func (v SemVer) String() string {
+func (v String) String() string {
 	return string(v)
 }
 
@@ -291,10 +291,10 @@ valid semantic versions will evaluate to v0.0.0.
 
 Example:
 
-	ver := SemVer("3.14.15").Get()
+	ver := SemVer.String("3.14.15").Get()
 	fmt.Println("Major version:", ver.Major)
 */
-func (v SemVer) Get(conf ...*config) *version {
+func (v String) Get(conf ...*config) *Version {
 	set := &defaultConf
 	if conf != nil && conf[0] != nil {
 		set = conf[0]
@@ -302,14 +302,14 @@ func (v SemVer) Get(conf ...*config) *version {
 
 	parts := set.re.FindStringSubmatch(v.String())
 	if len(parts) != 7 {
-		return &version{}
+		return &Version{}
 	}
 
 	maj, _ := strconv.ParseInt(parts[2], 10, 16)
 	min, _ := strconv.ParseInt(parts[3], 10, 16)
 	patch, _ := strconv.ParseInt(parts[4], 10, 16)
 
-	return &version{
+	return &Version{
 		Operator:      Operator(parts[1]),
 		Major:         uint16(maj),
 		Minor:         uint16(min),
@@ -317,6 +317,6 @@ func (v SemVer) Get(conf ...*config) *version {
 		PreRelease:    parts[5],
 		BuildMetadata: parts[6],
 
-		conf: set,
+		Config: set,
 	}
 }
