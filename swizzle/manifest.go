@@ -99,7 +99,7 @@ func (m *Manifest) SetVersion(version string) *Manifest {
 // to the manifest.
 func (m *Manifest) AddDependency(ctx context.Context, repo string, version string) error {
 	r := Repo(repo)
-	v := SemVer(version).Get()
+	v := SemVer(version).Get(nil)
 	rel, err := r.Release(ctx, version)
 	if err != nil {
 		return err
@@ -112,7 +112,7 @@ func (m *Manifest) AddDependency(ctx context.Context, repo string, version strin
 
 	for k := range dep.Dependency {
 		subVer := dep.Dependency[k]
-		err = m.addDependency(k, subVer.Get())
+		err = m.addDependency(k, subVer.Get(nil))
 		if err != nil {
 			return err
 		}
@@ -130,7 +130,7 @@ func (m *Manifest) addDependency(repo Repo, version *Version) error {
 	for k := range m.Dependency {
 		if k == repo {
 			exists = true
-			currVer := m.Dependency[repo].Get()
+			currVer := m.Dependency[repo].Get(nil)
 			if ok := currVer.OpCompare(version); ok {
 				m.Dependency[repo] = SemVer(version.SemVer())
 			} else {
@@ -164,7 +164,7 @@ func (m *Manifest) DownloadReleaseFiles(ctx context.Context, path string) error 
 	fname := fmt.Sprintf(
 		"%s-%s.%s",
 		m.Repo.Name(),
-		m.Version.Get().String(),
+		m.Version.Get(nil).String(),
 		manifestName,
 	)
 	fpath := filepath.Clean(filepath.Join(path, fname))

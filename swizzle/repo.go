@@ -96,7 +96,7 @@ func (r Repo) Manifest(ctx context.Context, release *github.RepositoryRelease) (
 
 // Release fetches a repository release.
 func (r Repo) Release(ctx context.Context, version string) (*github.RepositoryRelease, error) {
-	ver := SemVer(version).Get()
+	ver := SemVer(version).Get(nil)
 
 	rel, err := r.Releases(ctx)
 	if err != nil {

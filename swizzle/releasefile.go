@@ -63,7 +63,7 @@ func (f *ReleaseFile) download(ctx context.Context, path string, m *Manifest) er
 	defer resp.Body.Close()
 
 	f.archive = NewArchive(
-		fmt.Sprintf("%s-%s-%s", m.Repo.Name(), m.Version.Get().String(), f.Name),
+		fmt.Sprintf("%s-%s-%s", m.Repo.Name(), m.Version.Get(nil).String(), f.Name),
 		cleanpath,
 	)
 	out, err := os.Create(f.archive.Location())
