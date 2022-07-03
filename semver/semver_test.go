@@ -1,6 +1,7 @@
 package SemVer
 
 import (
+	"fmt"
 	"testing"
 
 	. "github.com/franela/goblin"
@@ -204,4 +205,78 @@ func TestComparePreRelease(t *testing.T) {
 			g.Assert(v.comparePreRelease("alpha-1.1")).Equal(-1)
 		})
 	})
+}
+
+func ExampleString() {
+	v := String(">=v3.14.15")
+	fmt.Println(v.String())
+	// Output: >=v3.14.15
+}
+
+func ExampleString_Get() {
+	v := String(">=v3.14.15").Get()
+	fmt.Println(v.String())
+	// Output: v3.14.15
+}
+
+func ExampleVersion() {
+	s := String("v1.2.3")
+	v := s.Get()
+	fmt.Println(int(v.Patch))
+	// Output: 3
+}
+
+func ExampleVersion_Compare_gt() {
+	ver := String("v2.0.0").Get()
+	i := ver.Compare(String("v1.0.0").Get())
+	fmt.Println(i)
+	// Output: 1
+}
+
+func ExampleVersion_Compare_lt() {
+	ver := String("v1.0.0").Get()
+	i := ver.Compare(String("v2.0.0").Get())
+	fmt.Println(i)
+	// Output: -1
+}
+
+func ExampleVersion_Compare_equal() {
+	ver := String("v1.0.0").Get()
+	i := ver.Compare(String("v1.0.0").Get())
+	fmt.Println(i)
+	// Output: 0
+}
+
+func ExampleVersion_OpCompare() {
+	ver := String(">=v1.0.0").Get()
+	ok := ver.OpCompare(String("v1.0.0").Get())
+	fmt.Println(ok)
+	// Output: true
+}
+
+func ExampleConfig() {
+	conf := Config(Operators{
+		GT:  Operator("+"),
+		GTE: Operator("+="),
+		LT:  Operator("-"),
+		LTE: Operator("-="),
+	}, `[\+|-]+=?`)
+
+	v := String("+=v1.0.0").Get(conf)
+	fmt.Println(v.OpCompare(String("v1.1.0").Get()))
+	// Output: true
+}
+
+func ExampleConfig_gte() {
+	// support only GTE comparisons.
+	conf := Config(Operators{
+		GT:  Operator("~"),
+		GTE: Operator("~"),
+		LT:  Operator("~"),
+		LTE: Operator("~"),
+	}, `~`)
+
+	v := String("~v1.0.0").Get(conf)
+	fmt.Println(v.OpCompare(String("v1.1.0").Get()))
+	// Output: true
 }
