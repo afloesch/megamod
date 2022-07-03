@@ -13,12 +13,12 @@ func TestSemVerParse(t *testing.T) {
 	g.Describe("SemVer string parsing to version", func() {
 		g.It("Should parse all semantic version parts", func() {
 			v := String(">=v1.2.3-pre+meta").Get()
-			g.Assert(string(v.Operator)).Equal(">=")
-			g.Assert(int(v.Major)).Equal(1)
-			g.Assert(int(v.Minor)).Equal(2)
-			g.Assert(int(v.Patch)).Equal(3)
-			g.Assert(v.PreRelease).Equal("pre")
-			g.Assert(v.BuildMetadata).Equal("meta")
+			g.Assert(v.Operator()).Equal(">=")
+			g.Assert(v.Major()).Equal(1)
+			g.Assert(v.Minor()).Equal(2)
+			g.Assert(v.Patch()).Equal(3)
+			g.Assert(v.PreRelease()).Equal("pre")
+			g.Assert(v.Metadata()).Equal("meta")
 		})
 
 		g.It("Should return string value for SemVer.String", func() {
@@ -38,12 +38,12 @@ func TestSemVerParse(t *testing.T) {
 
 		g.It("Should parse invalid semantic version to v0.0.0", func() {
 			v := String("nosemver").Get()
-			g.Assert(string(v.Operator)).Equal("")
-			g.Assert(int(v.Major)).Equal(0)
-			g.Assert(int(v.Minor)).Equal(0)
-			g.Assert(int(v.Patch)).Equal(0)
-			g.Assert(v.PreRelease).Equal("")
-			g.Assert(v.BuildMetadata).Equal("")
+			g.Assert(v.Operator()).Equal("")
+			g.Assert(v.Major()).Equal(0)
+			g.Assert(v.Minor()).Equal(0)
+			g.Assert(v.Patch()).Equal(0)
+			g.Assert(v.PreRelease()).Equal("")
+			g.Assert(v.Metadata()).Equal("")
 		})
 	})
 }
@@ -169,45 +169,45 @@ func TestComparePreRelease(t *testing.T) {
 
 	g.Describe("Compare pre release version", func() {
 		g.It("Should return 0 for empty pre release info", func() {
-			v := Version{PreRelease: ""}
+			v := Version{preRelease: ""}
 			g.Assert(v.comparePreRelease("")).Equal(0)
 		})
 		g.It("Should return 1 for clean vs dirty build", func() {
-			v := Version{PreRelease: ""}
+			v := Version{preRelease: ""}
 			g.Assert(v.comparePreRelease("1")).Equal(1)
 		})
 		g.It("Should return -1 for dirty vs clean build", func() {
-			v := Version{PreRelease: "alpha"}
+			v := Version{preRelease: "alpha"}
 			g.Assert(v.comparePreRelease("")).Equal(-1)
 		})
 		g.It("should handle alphabetical compare", func() {
-			v := Version{PreRelease: "b"}
+			v := Version{preRelease: "b"}
 			g.Assert(v.comparePreRelease("a")).Equal(1)
-			v = Version{PreRelease: "a"}
+			v = Version{preRelease: "a"}
 			g.Assert(v.comparePreRelease("b")).Equal(-1)
-			v = Version{PreRelease: "b"}
+			v = Version{preRelease: "b"}
 			g.Assert(v.comparePreRelease("b")).Equal(0)
 		})
 		g.It("should handle numerical compare", func() {
-			v := Version{PreRelease: "2"}
+			v := Version{preRelease: "2"}
 			g.Assert(v.comparePreRelease("1")).Equal(1)
-			v = Version{PreRelease: "1"}
+			v = Version{preRelease: "1"}
 			g.Assert(v.comparePreRelease("2")).Equal(-1)
-			v = Version{PreRelease: "1"}
+			v = Version{preRelease: "1"}
 			g.Assert(v.comparePreRelease("1")).Equal(0)
 		})
 		g.It("should handle '.' and '-' delimited data", func() {
-			v := Version{PreRelease: "alpha.2"}
+			v := Version{preRelease: "alpha.2"}
 			g.Assert(v.comparePreRelease("alpha-1")).Equal(1)
-			v = Version{PreRelease: "alpha.1"}
+			v = Version{preRelease: "alpha.1"}
 			g.Assert(v.comparePreRelease("alpha-2")).Equal(-1)
-			v = Version{PreRelease: "alpha.2"}
+			v = Version{preRelease: "alpha.2"}
 			g.Assert(v.comparePreRelease("alpha-2")).Equal(0)
 		})
 		g.It("should handle mismatched sizes of delimited data", func() {
-			v := Version{PreRelease: "alpha.1.1"}
+			v := Version{preRelease: "alpha.1.1"}
 			g.Assert(v.comparePreRelease("alpha-1")).Equal(1)
-			v = Version{PreRelease: "alpha.1"}
+			v = Version{preRelease: "alpha.1"}
 			g.Assert(v.comparePreRelease("alpha-1.1")).Equal(-1)
 		})
 	})
@@ -250,7 +250,7 @@ func Example_marshal() {
 		panic(err)
 	}
 
-	fmt.Println(data.Version.Get().Minor)
+	fmt.Println(data.Version.Get().Minor())
 	// Output: 14
 }
 
@@ -274,7 +274,7 @@ func ExampleVersion() {
 	s := String("v1.2.3")
 	v := s.Get()
 
-	fmt.Println(v.Patch)
+	fmt.Println(v.Patch())
 	// Output: 3
 }
 

@@ -109,35 +109,65 @@ See https://semver.org/ for more info on semantic versioning and version
 comparisons.
 */
 type Version struct {
-	// Operator is an optional value for the set of comparison operators for the
+	// operator is an optional value for the set of comparison operators for the
 	// version. See the SemVer.Operators for more info.
-	Operator Operator
-	// Major is the semantic major release version number. Must be a positive
+	operator Operator
+	// major is the semantic major release version number. Must be a positive
 	// integer.
-	Major uint16
-	// Minor is the semantic minor release version number. Must be a positive
+	major uint16
+	// minor is the semantic minor release version number. Must be a positive
 	// integer.
-	Minor uint16
-	// Patch is the semantic patch release version number. Must be a positive
+	minor uint16
+	// patch is the semantic patch release version number. Must be a positive
 	// integer.
-	Patch uint16
-	// PreRelease is the string data contained after the '-' in a semantic
+	patch uint16
+	// preRelease is the string data contained after the '-' in a semantic
 	// version string, but before the '+' denoting BuildMetadata. Can contain
 	// only alphanumeric characters separated by '-' or '.'.
-	PreRelease string
-	// BuildMetadata is the string data after the '+' character in a semantic
+	preRelease string
+	// buildMetadata is the string data after the '+' character in a semantic
 	// version string. It can contain only alphanumeric characters separated by
 	// a '-' or '.', and is not factored into version comparisons.
-	BuildMetadata string
-	// Config is the Operators and Regex configuration to use for version comparison
+	buildMetadata string
+	// config is the Operators and Regex configuration to use for version comparison
 	// operators
 	config *config
+}
+
+// Major returns the semantic major version number as an int.
+func (v *Version) Major() int {
+	return int(v.major)
+}
+
+// Minor returns the semantic minor version number as an int.
+func (v *Version) Minor() int {
+	return int(v.minor)
+}
+
+// Operator returns any set Operator as a string.
+func (v *Version) Operator() string {
+	return string(v.operator)
+}
+
+// Patch returns the semantic patch version as an int.
+func (v *Version) Patch() int {
+	return int(v.patch)
+}
+
+// PreRelease returns semantic version pre release data as a string.
+func (v *Version) PreRelease() string {
+	return v.preRelease
+}
+
+// Metadata returns semantic version build metadata as a string.
+func (v *Version) Metadata() string {
+	return v.buildMetadata
 }
 
 // ToString returns the SemVer.String for the version.
 func (v *Version) ToString() String {
 	var s strings.Builder
-	s.WriteString(string(v.Operator))
+	s.WriteString(string(v.operator))
 	s.WriteString(v.String())
 	return String(s.String())
 }
@@ -147,14 +177,14 @@ func (v *Version) ToString() String {
 // v{Major}.{Minor}.{Patch}-{PreRelease}+{BuildMetadata}
 func (v *Version) String() string {
 	var s strings.Builder
-	s.WriteString(fmt.Sprintf("v%v.%v.%v", v.Major, v.Minor, v.Patch))
-	if v.PreRelease != "" {
+	s.WriteString(fmt.Sprintf("v%v.%v.%v", v.major, v.minor, v.patch))
+	if v.preRelease != "" {
 		s.WriteString("-")
-		s.WriteString(v.PreRelease)
+		s.WriteString(v.preRelease)
 	}
-	if v.BuildMetadata != "" {
+	if v.buildMetadata != "" {
 		s.WriteString("+")
-		s.WriteString(v.BuildMetadata)
+		s.WriteString(v.buildMetadata)
 	}
 	return s.String()
 }
@@ -169,7 +199,7 @@ func (v *Version) OpCompare(version *Version) bool {
 	i := v.Compare(version)
 
 	var t bool
-	switch v.Operator {
+	switch v.operator {
 	case "":
 		t = i == 0
 	case v.config.ops.GTE:
@@ -193,31 +223,31 @@ the version param, -1 if the current version is less than the version param, and
 Comparison logic is implemented to the https://semver.org specification.
 */
 func (v *Version) Compare(version *Version) int {
-	if v.Major > version.Major {
+	if v.major > version.major {
 		return 1
 	}
 
-	if v.Major < version.Major {
+	if v.major < version.major {
 		return -1
 	}
 
-	if v.Minor > version.Minor {
+	if v.minor > version.minor {
 		return 1
 	}
 
-	if v.Minor < version.Minor {
+	if v.minor < version.minor {
 		return -1
 	}
 
-	if v.Patch > version.Patch {
+	if v.patch > version.patch {
 		return 1
 	}
 
-	if v.Patch < version.Patch {
+	if v.patch < version.patch {
 		return -1
 	}
 
-	return v.comparePreRelease(version.PreRelease)
+	return v.comparePreRelease(version.preRelease)
 }
 
 /*
@@ -228,20 +258,20 @@ the current version.PreRelease is less than the preRelease param, and 0 if they
 are equal.
 */
 func (v *Version) comparePreRelease(preRelease string) int {
-	if v.PreRelease == "" && preRelease == "" {
+	if v.preRelease == "" && preRelease == "" {
 		return 0
 	}
 
-	if v.PreRelease == "" && preRelease != "" {
+	if v.preRelease == "" && preRelease != "" {
 		return 1
 	}
 
-	if v.PreRelease != "" && preRelease == "" {
+	if v.preRelease != "" && preRelease == "" {
 		return -1
 	}
 
 	// split pre release string parts
-	vp := strings.FieldsFunc(v.PreRelease, splitRelease)
+	vp := strings.FieldsFunc(v.preRelease, splitRelease)
 	versionp := strings.FieldsFunc(preRelease, splitRelease)
 
 	// fill missing values
@@ -296,12 +326,12 @@ func (v String) Get(conf ...*config) *Version {
 	patch, _ := strconv.ParseInt(parts[4], 10, 16)
 
 	return &Version{
-		Operator:      Operator(parts[1]),
-		Major:         uint16(maj),
-		Minor:         uint16(min),
-		Patch:         uint16(patch),
-		PreRelease:    parts[5],
-		BuildMetadata: parts[6],
+		operator:      Operator(parts[1]),
+		major:         uint16(maj),
+		minor:         uint16(min),
+		patch:         uint16(patch),
+		preRelease:    parts[5],
+		buildMetadata: parts[6],
 
 		config: set,
 	}
