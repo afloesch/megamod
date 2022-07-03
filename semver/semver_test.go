@@ -265,7 +265,7 @@ func ExampleString_Get() {
 func ExampleVersion() {
 	s := String("v1.2.3")
 	v := s.Get()
-	fmt.Println(int(v.Patch))
+	fmt.Println(v.Patch)
 	// Output: 3
 }
 
@@ -291,7 +291,16 @@ func ExampleVersion_Compare_equal() {
 }
 
 func ExampleVersion_OpCompare() {
+	// By dropping any operator in the version OpCompare
+	// will produce an equality check.
 	ver := String(">=v1.0.0").Get()
+	ok := ver.OpCompare(String("v1.0.0").Get())
+	fmt.Println(ok)
+	// Output: true
+}
+
+func ExampleVersion_OpCompare_equal() {
+	ver := String("v1.0.0").Get()
 	ok := ver.OpCompare(String("v1.0.0").Get())
 	fmt.Println(ok)
 	// Output: true
