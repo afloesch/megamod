@@ -129,7 +129,8 @@ type Version struct {
 	// version string. It can contain only alphanumeric characters separated by
 	// a '-' or '.', and is not factored into version comparisons.
 	BuildMetadata string
-
+	// Config is the Operators and Regex configuration to use for version comparison
+	// operators
 	Config *config
 }
 
