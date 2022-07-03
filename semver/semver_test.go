@@ -255,13 +255,13 @@ func Example_opcompare() {
 	// Output: true
 }
 
-func ExampleString() {
+func ExampleString_String() {
 	v := String(">=v3.14.15")
 	fmt.Println(v.String())
 	// Output: >=v3.14.15
 }
 
-func ExampleString_Get() {
+func ExampleVersion_String() {
 	v := String(">=v3.14.15").Get()
 	fmt.Println(v.String())
 	// Output: v3.14.15
