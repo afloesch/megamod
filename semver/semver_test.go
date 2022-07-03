@@ -205,7 +205,7 @@ func TestComparePreRelease(t *testing.T) {
 			g.Assert(v.comparePreRelease("alpha-2")).Equal(0)
 		})
 		g.It("should handle mismatched sizes of delimited data", func() {
-			v := Version{PreRelease: "alpha.2.1"}
+			v := Version{PreRelease: "alpha.1.1"}
 			g.Assert(v.comparePreRelease("alpha-1")).Equal(1)
 			v = Version{PreRelease: "alpha.1"}
 			g.Assert(v.comparePreRelease("alpha-1.1")).Equal(-1)
