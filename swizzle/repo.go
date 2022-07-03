@@ -109,7 +109,7 @@ func (r Repo) Release(ctx context.Context, version string) (*github.RepositoryRe
 		}
 	}
 
-	return nil, fmt.Errorf("no release for version '%s'", version)
+	return nil, fmt.Errorf("no release for version '%s'", ver.String())
 }
 
 // LatestRelease fetches the latest release for a repository.

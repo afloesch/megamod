@@ -15,13 +15,13 @@ require (
 	github.com/bodgit/windows v1.0.0 // indirect
 	github.com/connesc/cipherio v0.2.1 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
-	github.com/hashicorp/errwrap v1.0.0 // indirect
+	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
-	github.com/klauspost/compress v1.15.4 // indirect
-	github.com/pierrec/lz4/v4 v4.1.14 // indirect
+	github.com/klauspost/compress v1.15.7 // indirect
+	github.com/pierrec/lz4/v4 v4.1.15 // indirect
 	github.com/ulikunitz/xz v0.5.10 // indirect
-	go4.org v0.0.0-20200411211856-f5505b9728dd // indirect
-	golang.org/x/crypto v0.0.0-20210817164053-32db794688a5 // indirect
-	golang.org/x/net v0.0.0-20211029224645-99673261e6eb // indirect
+	go4.org v0.0.0-20201209231011-d4a079459e60 // indirect
+	golang.org/x/crypto v0.0.0-20220622213112-05595931fe9d // indirect
+	golang.org/x/net v0.0.0-20220630215102-69896b714898 // indirect
 	golang.org/x/text v0.3.7 // indirect
 )
