@@ -10,7 +10,7 @@ import (
 
 func TestSemVerParse(t *testing.T) {
 	g := Goblin(t)
-	g.Describe("SemVer string parsing to version", func() {
+	g.Describe("SemVer String parsing to Version", func() {
 		g.It("Should parse all semantic version parts", func() {
 			v := String(">=v1.2.3-pre+meta").Get()
 			g.Assert(v.Operator()).Equal(">=")
@@ -19,11 +19,6 @@ func TestSemVerParse(t *testing.T) {
 			g.Assert(v.Patch()).Equal(3)
 			g.Assert(v.PreRelease()).Equal("pre")
 			g.Assert(v.Metadata()).Equal("meta")
-		})
-
-		g.It("Should return string value for SemVer.String", func() {
-			v := String(">=v1.2.3-pre+meta")
-			g.Assert(string(v)).Equal(">=v1.2.3-pre+meta")
 		})
 
 		g.It("Should return semantic string for version", func() {
@@ -50,7 +45,7 @@ func TestSemVerParse(t *testing.T) {
 
 func TestConfig(t *testing.T) {
 	g := Goblin(t)
-	g.Describe("Parse with custom config", func() {
+	g.Describe("Custom config", func() {
 		g.It("Should support custom Operator syntax", func() {
 			conf := Config(Operators{
 				GT:  Operator("+"),
@@ -168,19 +163,15 @@ func TestComparePreRelease(t *testing.T) {
 	g := Goblin(t)
 
 	g.Describe("Compare pre release version", func() {
-		g.It("Should return 0 for empty pre release info", func() {
+		g.It("Should give precedence to clean versions", func() {
 			v := Version{preRelease: ""}
 			g.Assert(v.comparePreRelease("")).Equal(0)
-		})
-		g.It("Should return 1 for clean vs dirty build", func() {
-			v := Version{preRelease: ""}
+			v = Version{preRelease: ""}
 			g.Assert(v.comparePreRelease("1")).Equal(1)
-		})
-		g.It("Should return -1 for dirty vs clean build", func() {
-			v := Version{preRelease: "alpha"}
+			v = Version{preRelease: "alpha"}
 			g.Assert(v.comparePreRelease("")).Equal(-1)
 		})
-		g.It("should handle alphabetical compare", func() {
+		g.It("should handle alphabetical compare in ASCII sort order", func() {
 			v := Version{preRelease: "b"}
 			g.Assert(v.comparePreRelease("a")).Equal(1)
 			v = Version{preRelease: "a"}
@@ -196,7 +187,7 @@ func TestComparePreRelease(t *testing.T) {
 			v = Version{preRelease: "1"}
 			g.Assert(v.comparePreRelease("1")).Equal(0)
 		})
-		g.It("should handle '.' and '-' delimited data", func() {
+		g.It("should handle dot delimited data", func() {
 			v := Version{preRelease: "alpha.2"}
 			g.Assert(v.comparePreRelease("alpha.1")).Equal(1)
 			v = Version{preRelease: "alpha.1"}
@@ -204,11 +195,19 @@ func TestComparePreRelease(t *testing.T) {
 			v = Version{preRelease: "alpha.2"}
 			g.Assert(v.comparePreRelease("alpha.2")).Equal(0)
 		})
-		g.It("should handle mismatched sizes of delimited data", func() {
+		g.It("should give numeric identifiers lower precedence", func() {
+			v := Version{preRelease: "1"}
+			g.Assert(v.comparePreRelease("alpha")).Equal(-1)
+			v = Version{preRelease: "beta"}
+			g.Assert(v.comparePreRelease("5")).Equal(1)
+		})
+		g.It("should give larger number of fields precedence", func() {
 			v := Version{preRelease: "alpha.1.1"}
 			g.Assert(v.comparePreRelease("alpha.1")).Equal(1)
-			v = Version{preRelease: "alpha.1"}
-			g.Assert(v.comparePreRelease("alpha.1.1")).Equal(-1)
+		})
+		g.It("should handle mismatched sizes and types of delimited data", func() {
+			v := Version{preRelease: "alpha.1"}
+			g.Assert(v.comparePreRelease("alpha.alpha.1")).Equal(-1)
 			v = Version{preRelease: "rc"}
 			g.Assert(v.comparePreRelease("alpha.1.1")).Equal(1)
 			v = Version{preRelease: "rc"}
@@ -282,6 +281,26 @@ func ExampleVersion() {
 
 	fmt.Println(v.Patch())
 	// Output: 3
+}
+
+func ExampleVersion_PreRelease() {
+	// Prerelease data comes after the patch verison and a hyphen. It
+	// can contain alphanumeric characters as well as hyphens and period.
+	//
+	// Prerelease versions are split on any period, and each part compared
+	// individually as outlined by https://semver.org/#spec-item-11.
+	v := String("v1.0.0-alpha.1").Get()
+	fmt.Println(v.PreRelease())
+	// Output: alpha.1
+}
+
+func ExampleVersion_Metadata() {
+	// Build metadata can contain any alphanumeric characters
+	// as well as hyphens or periods. It comes after the + in a
+	// semantic version string.
+	v := String("v1.0.0-rc+issue-46").Get()
+	fmt.Println(v.Metadata())
+	// Output: issue-46
 }
 
 func ExampleVersion_Compare_gT() {
