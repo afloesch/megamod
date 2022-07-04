@@ -90,7 +90,6 @@ func (f *ReleaseFile) download(
 	f.size = resp.ContentLength
 	progress := 0
 	chunkSize := 500
-	fmt.Println("total size", f.Size())
 
 	for {
 		var buf = make([]byte, chunkSize)

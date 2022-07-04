@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"math"
 	"os"
 	"path/filepath"
 
@@ -155,24 +154,31 @@ func (m *Manifest) addDependency(repo Repo, version *semver.Version) error {
 
 // DownloadReleaseFile fetches and writes all release archives to the system
 // at the given folder path.
-func (m *Manifest) DownloadReleaseFile(ctx context.Context, file *ReleaseFile, path string) error {
+func (m *Manifest) DownloadReleaseFile(
+	ctx context.Context,
+	file *ReleaseFile,
+	path string,
+) (chan bool, chan float64, chan error) {
 	done := make(chan bool)
 	progCh := make(chan float64)
 	errCh := make(chan error)
 	go file.download(ctx, path, m, done, progCh, errCh)
+	return done, progCh, errCh
 
-	var prog float64
+	/*var prog float64
 	var err error
 	for {
 		select {
 		case <-done:
+			fmt.Println()
 			return nil
 		case prog = <-progCh:
-			fmt.Println(fmt.Sprintf("%v%% of %v", math.Floor(prog), file.Size()))
+			fmt.Printf(fmt.Sprintf("\r%v percent of %v", math.Floor(prog), file.Size()))
 		case err = <-errCh:
+			fmt.Println()
 			return err
 		}
-	}
+	}*/
 
 	/*fname := fmt.Sprintf(
 		"%s-%s.%s",
