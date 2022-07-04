@@ -165,21 +165,6 @@ func (m *Manifest) DownloadReleaseFile(
 	go file.download(ctx, path, m, done, progCh, errCh)
 	return done, progCh, errCh
 
-	/*var prog float64
-	var err error
-	for {
-		select {
-		case <-done:
-			fmt.Println()
-			return nil
-		case prog = <-progCh:
-			fmt.Printf(fmt.Sprintf("\r%v percent of %v", math.Floor(prog), file.Size()))
-		case err = <-errCh:
-			fmt.Println()
-			return err
-		}
-	}*/
-
 	/*fname := fmt.Sprintf(
 		"%s-%s.%s",
 		m.Repo.Name(),
